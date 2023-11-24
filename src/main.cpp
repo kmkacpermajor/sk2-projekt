@@ -8,19 +8,16 @@
 #include "tcpconnection/tcpconnection.hpp"
 #include "sqliteconnector/sqliteconnector.hpp"
 #include "commandhandler/commandhandler.hpp"
+#include "commandparser/commandparser.hpp"
+#include <deque>
 
 
 void handleNewServerConnection(int serverFD){
   auto connection = TCPConnection(serverFD);
   auto dbConnector = SQLiteConnector(DB_NAME);
+  auto commandParser = CommandParser();
   auto commandHandler = CommandHandler(connection, dbConnector);
   connection.sendMessage("Połączono z serwerem");
-
-  std::cout << connection.getCurrentUser() << std::endl;
-
-  connection.setCurrentUser("chuj");
-
-  std::cout << connection.getCurrentUser() << std::endl;
 
   while(1){
     std::string message;
@@ -33,16 +30,24 @@ void handleNewServerConnection(int serverFD){
     }
 
     try{
-      commandHandler.handleCommand();
-      connection.setCurrentUser("dupa");
-      commandHandler.handleCommand();
+      std::deque<std::string> params = commandParser.parseCommand(message);
+      if (params.empty()){
+        throw CommandParserError("Empty command given");
+      }
+      std::string command = params.front();
+      params.pop_front();
+
+
     }catch(CommandHandlerError& e){
+      response = e.what();
+      std::cout << "Error occurred when handling command: " << message << ": " << e.what() << std::endl;
+    }catch(CommandParserError& e){
       response = e.what();
       std::cout << "Error occurred when handling command: " << message << ": " << e.what() << std::endl;
     }
 
     try{      
-      connection.sendMessage(message);
+      connection.sendMessage(response);
     }catch(ConnectionError& e){
       std::cout << "Error occurred when sending response: " << e.what() << std::endl;
     }

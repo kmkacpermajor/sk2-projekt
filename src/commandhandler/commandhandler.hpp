@@ -13,10 +13,9 @@ class CommandHandlerError : public std::exception {
 };
 
 class CommandHandler{
-    SQLiteConnector dbConnector;
-    TCPConnection connection;
+    SQLiteConnector& dbConnector;
+    TCPConnection& connection;
     public:
-        CommandHandler(TCPConnection conn, SQLiteConnector dbC);
-        std::string handleCommand();
+        CommandHandler(TCPConnection &conn, SQLiteConnector &dbC);
         ~CommandHandler();
 };
