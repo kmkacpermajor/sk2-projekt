@@ -16,6 +16,14 @@ std::string CommandHandlerError::what(){
 
 CommandHandler::CommandHandler(TCPConnection &conn, SQLiteConnector &dbC) : dbConnector(dbC), connection(conn) {
     addCommandFunction("help", std::bind(&CommandHandler::helpCommand, this, std::placeholders::_1));
+    // register [name]
+    // login [name]
+    // logoff [name]
+    // list
+    // grant [name] [IP]
+    // revoke [name] [IP]
+    // shutdown [IP]
+    // exit
 }
 
 void CommandHandler::addCommandFunction(std::string command, const commandFunction& func) {
@@ -38,6 +46,14 @@ std::string CommandHandler::helpCommand(paramDeque params){
 
     return "HELP";
 }
+
+// std::string CommandHandler::helpCommand(paramDeque params){
+//     if (params.size() != 0){
+//         throw CommandHandlerError("Incorrect number of parameters for command help");
+//     }
+
+//     return "HELP";
+// }
 
 CommandHandler::~CommandHandler(){
     
