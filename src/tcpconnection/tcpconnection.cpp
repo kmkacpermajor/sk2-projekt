@@ -5,7 +5,7 @@
 
 #include "tcpconnection.hpp"
 #include "../misc/const.hpp"
-#include "../misc/misc.hpp"
+#include "../misc/stringTrim.hpp"
 
 ConnectionError::ConnectionError(int err){
     this->err = err;

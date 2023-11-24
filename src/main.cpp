@@ -3,13 +3,15 @@
 #include <arpa/inet.h>
 #include <cstring>
 #include <unistd.h>
+#include <deque>
 
+#include "misc/stringTrim.hpp"
+#include "misc/types.hpp"
 #include "misc/const.hpp"
 #include "tcpconnection/tcpconnection.hpp"
 #include "sqliteconnector/sqliteconnector.hpp"
 #include "commandhandler/commandhandler.hpp"
 #include "commandparser/commandparser.hpp"
-#include <deque>
 
 
 void handleNewServerConnection(int serverFD){
@@ -30,20 +32,25 @@ void handleNewServerConnection(int serverFD){
     }
 
     try{
-      std::deque<std::string> params = commandParser.parseCommand(message);
+      paramDeque params = commandParser.parseCommand(message);
       if (params.empty()){
         throw CommandParserError("Empty command given");
       }
       std::string command = params.front();
       params.pop_front();
+      std::cout << command << "with " << params.size() << std::endl;
 
-
+      response = commandHandler.handleCommand(command, params);
     }catch(CommandHandlerError& e){
       response = e.what();
       std::cout << "Error occurred when handling command: " << message << ": " << e.what() << std::endl;
     }catch(CommandParserError& e){
       response = e.what();
       std::cout << "Error occurred when handling command: " << message << ": " << e.what() << std::endl;
+    }
+
+    if(response.length() == 0){
+      return;
     }
 
     try{      
