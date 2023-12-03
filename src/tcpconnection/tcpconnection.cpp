@@ -2,6 +2,8 @@
 #include <unistd.h>
 #include <vector>
 #include <string.h>
+#include <algorithm>
+#include <mutex>
 
 #include "tcpconnection.hpp"
 #include "../misc/const.hpp"
@@ -16,15 +18,23 @@ std::string ConnectionError::what(){
 }
 
 
-TCPConnection::TCPConnection(int serverFD){
+TCPConnection::TCPConnection(int serverFD, std::mutex &m) : mutex(m){
     socklen_t sl;
     struct sockaddr_in caddr;
     sl = sizeof(caddr);
-    this->clientFD = accept(serverFD, (struct sockaddr*)&caddr, &sl);
+    clientFD = accept(serverFD, (struct sockaddr*)&caddr, &sl);
     if (this->clientFD == -1){
         throw ConnectionError(errno);
     }
-    this->IPAddress = inet_ntoa((struct in_addr)caddr.sin_addr);
+    IPAddress = inet_ntoa((struct in_addr)caddr.sin_addr);
+}
+
+TCPConnection::TCPConnection(std::mutex &m) : mutex(m){
+
+}
+
+void TCPConnection::setClientFD(int fd){
+    clientFD = fd;
 }
 
 std::string TCPConnection::getIPAddress(){
@@ -56,10 +66,13 @@ std::string TCPConnection::getMessage(){
         }
     } while ( bytesReceived == MAX_BUFFER_LENGTH);
 
+    message.erase(std::find(message.begin(), message.end(), '\0'), message.end());
+
     return trim(message);
 }
 
 void TCPConnection::sendMessage(std::string message){
+    std::lock_guard<std::mutex> lock(mutex);
     send(this->clientFD, message.c_str(), message.length(), 0);
     // Tu rzuca broken pipe
 }

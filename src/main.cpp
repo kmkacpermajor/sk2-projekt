@@ -4,6 +4,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <deque>
+#include <thread>
 
 #include "misc/stringTrim.hpp"
 #include "misc/types.hpp"
@@ -13,9 +14,10 @@
 #include "commandhandler/commandhandler.hpp"
 #include "commandparser/commandparser.hpp"
 
+std::mutex m;
 
 void handleNewServerConnection(int serverFD){
-  auto connection = TCPConnection(serverFD);
+  auto connection = TCPConnection(serverFD, m);
   auto dbConnector = SQLiteConnector(DB_NAME);
   auto commandParser = CommandParser();
   auto commandHandler = CommandHandler(connection, dbConnector);
@@ -82,7 +84,6 @@ void* handleNewThread(void* arg) {
 int main(){
   int serverSocket;
   struct sockaddr_in serverAddress;
-  pthread_t tid;
 
   try{
     SQLiteConnector initSQLiteConnector = SQLiteConnector(DB_NAME);
@@ -108,8 +109,8 @@ int main(){
   }
   
   for (int i = 0; i < THREAD_COUNT; i++) {
-    pthread_create(&tid, NULL, handleNewThread, &serverSocket);
-    pthread_detach(tid);
+    std::thread thread(handleNewThread, &serverSocket);
+    thread.detach();
   }
   handleNewThread(&serverSocket);
 
