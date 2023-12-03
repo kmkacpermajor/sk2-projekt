@@ -1,10 +1,12 @@
 #pragma once
 #include <string>
 #include <deque>
+#include <algorithm>
 
 inline std::string& rtrim(std::string& s, const char* t = " \t\n\r\f\v")
 {
     s.erase(s.find_last_not_of(t) + 1);
+    s.erase(std::find(s.begin(), s.end(), '\0'), s.end());
     return s;
 }
 

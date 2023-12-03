@@ -1,11 +1,13 @@
 #pragma once
 #define HOW_MANY_TABLES "SELECT COUNT(*) count FROM sqlite_schema WHERE type ='table' AND name NOT LIKE 'sqlite_%'"
 
-#define CREATE_USERS "CREATE TABLE users ( username VARCHAR NOT NULL)"
+#define CREATE_USERS "CREATE TABLE  users ( username VARCHAR NOT NULL)"
 
-#define CREATE_MACHINES "CREATE TABLE machines (ip_address TEXT NOT NULL, state INTEGER NOT NULL)"
+#define CREATE_MACHINES "CREATE TABLE IF NOT EXISTS machines (ip_address TEXT NOT NULL, state INTEGER NOT NULL)"
 
-#define CREATE_ALLOWED_SHUTDOWNS "CREATE TABLE allowed_shutdowns (user_id INTEGER, machine_id INTEGER, FOREIGN KEY(user_id) REFERENCES users(rowid), FOREIGN KEY(machine_id) REFERENCES machines(rowid))"
+#define CREATE_ALLOWED_SHUTDOWNS "CREATE TABLE IF NOT EXISTS allowed_shutdowns (user_id INTEGER, machine_id INTEGER, FOREIGN KEY(user_id) REFERENCES users(rowid), FOREIGN KEY(machine_id) REFERENCES machines(rowid))"
+
+#define SELECT_USERS "SELECT username FROM users"
 
 #define SELECT_USER_ID "SELECT rowid FROM users WHERE username = ?"
 

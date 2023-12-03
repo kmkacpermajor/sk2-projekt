@@ -35,6 +35,10 @@ std::string TCPConnection::getCurrentUser(){
     return this->currentUser;
 }
 
+int TCPConnection::getClientFD(){
+    return this->clientFD;
+}
+
 void TCPConnection::setCurrentUser(std::string username){
     this->currentUser = username;
 }

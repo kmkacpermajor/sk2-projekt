@@ -19,13 +19,7 @@ class SQLiteConnector{
 
     public:
         SQLiteConnector(std::string dbName);
-        void createTables();
-        void runOperation(std::string sql);
         void initDatabase();
-        sqlite3_stmt* prepareQuery(std::string sql);
-        std::vector<std::map<std::string, std::string>> getQueryResults(sqlite3_stmt* statement);
-        void finalizeQuery(sqlite3_stmt* statement);
-        std::vector<std::map<std::string, std::string>> runQuery(std::string sql);
         int howManyTables();
         sqlite3* getDatabase();
         ~SQLiteConnector();

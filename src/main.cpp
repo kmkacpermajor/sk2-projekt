@@ -54,7 +54,7 @@ void handleNewServerConnection(int serverFD){
     }
 
     try{      
-      connection.sendMessage(response);
+      connection.sendMessage(trim(response));
     }catch(ConnectionError& e){
       std::cout << "Error occurred when sending response: " << e.what() << std::endl;
     }
