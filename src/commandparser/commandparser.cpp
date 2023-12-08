@@ -4,29 +4,33 @@
 
 #include "commandparser.hpp"
 
-CommandParserError::CommandParserError(const std::string message){
+CommandParserError::CommandParserError(const std::string message)
+{
     this->message = message;
 }
 
-std::string CommandParserError::what(){
+std::string CommandParserError::what()
+{
     return message;
 }
 
-CommandParser::CommandParser(){
-    
+CommandParser::CommandParser()
+{
 }
 
-std::deque<std::string> CommandParser::parseCommand(std::string command){
+std::deque<std::string> CommandParser::parseCommand(std::string command)
+{
     std::deque<std::string> deque;
     std::istringstream iss(command);
     std::string s;
-    while (getline(iss, s, ' ')){
+    while (getline(iss, s, ' '))
+    {
         deque.push_back(s);
     }
 
     return deque;
 }
 
-CommandParser::~CommandParser(){
-    
+CommandParser::~CommandParser()
+{
 }

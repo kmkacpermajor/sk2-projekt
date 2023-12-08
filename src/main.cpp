@@ -16,26 +16,33 @@
 
 std::mutex m;
 
-void handleNewServerConnection(int serverFD){
+void handleNewServerConnection(int serverFD)
+{
   auto connection = TCPConnection(serverFD, m);
   auto dbConnector = SQLiteConnector(DB_NAME);
   auto commandParser = CommandParser();
   auto commandHandler = CommandHandler(connection, dbConnector);
   connection.sendMessage("Połączono z serwerem");
 
-  while(1){
+  while (1)
+  {
     std::string message;
     std::string response;
-    try{      
+    try
+    {
       message = connection.getMessage();
-    }catch(ConnectionError& e){
+    }
+    catch (ConnectionError &e)
+    {
       std::cout << "Error occurred when getting new message: " << e.what() << std::endl;
       break;
     }
 
-    try{
+    try
+    {
       paramDeque params = commandParser.parseCommand(message);
-      if (params.empty()){
+      if (params.empty())
+      {
         throw CommandParserError("Empty command given");
       }
       std::string command = params.front();
@@ -43,37 +50,52 @@ void handleNewServerConnection(int serverFD){
       std::cout << command << "with " << params.size() << std::endl;
 
       response = commandHandler.handleCommand(command, params);
-    }catch(CommandHandlerError& e){
+    }
+    catch (CommandHandlerError &e)
+    {
       response = e.what();
       std::cout << "Error occurred when handling command: " << message << ": " << e.what() << std::endl;
-    }catch(CommandParserError& e){
+    }
+    catch (CommandParserError &e)
+    {
       response = e.what();
       std::cout << "Error occurred when handling command: " << message << ": " << e.what() << std::endl;
     }
 
-    if(response.length() == 0){
+    if (response.length() == 0)
+    {
       return;
     }
 
-    try{      
+    try
+    {
       connection.sendMessage(trim(response));
-    }catch(ConnectionError& e){
+    }
+    catch (ConnectionError &e)
+    {
       std::cout << "Error occurred when sending response: " << e.what() << std::endl;
     }
   }
 }
 
-void* handleNewThread(void* arg) {
-  int* serverFD = (int*)arg;
-  
-  try{
-    while(1) {
-      handleNewServerConnection(*serverFD);     
+void *handleNewThread(void *arg)
+{
+  int *serverFD = (int *)arg;
+
+  try
+  {
+    while (1)
+    {
+      handleNewServerConnection(*serverFD);
     }
-  } catch (ConnectionError& e){
+  }
+  catch (ConnectionError &e)
+  {
     std::cout << "Error occurred when connecting: " << e.what() << std::endl;
     exit(EXIT_FAILURE);
-  } catch (DatabaseError &e){
+  }
+  catch (DatabaseError &e)
+  {
     std::cout << "Failed to create database: " << e.what() << std::endl;
     exit(EXIT_FAILURE);
   }
@@ -81,18 +103,21 @@ void* handleNewThread(void* arg) {
   return 0;
 }
 
-int main(){
+int main()
+{
   int serverSocket;
   struct sockaddr_in serverAddress;
 
-  try{
+  try
+  {
     SQLiteConnector initSQLiteConnector = SQLiteConnector(DB_NAME);
     initSQLiteConnector.initDatabase();
-  } catch (DatabaseError& e){
+  }
+  catch (DatabaseError &e)
+  {
     std::cout << "Error occurred when initializing database: " << e.what() << std::endl;
     exit(EXIT_FAILURE);
-  } 
-  
+  }
 
   serverSocket = socket(PF_INET, SOCK_STREAM, 0);
   serverAddress.sin_family = AF_INET;
@@ -100,15 +125,17 @@ int main(){
   serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
 
   memset(serverAddress.sin_zero, '\0', sizeof(serverAddress.sin_zero));
-  bind(serverSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress));
+  bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
 
-  if(listen(serverSocket,50)==0)
+  if (listen(serverSocket, 50) == 0)
     printf("Listening on port %d\n", PORT);
-  else{
+  else
+  {
     perror("Cannot listen");
   }
-  
-  for (int i = 0; i < THREAD_COUNT; i++) {
+
+  for (int i = 0; i < THREAD_COUNT; i++)
+  {
     std::thread thread(handleNewThread, &serverSocket);
     thread.detach();
   }

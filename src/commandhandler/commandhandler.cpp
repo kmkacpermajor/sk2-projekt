@@ -1,163 +1,207 @@
-#include <string>
+#include <unistd.h>
 #include <deque>
 #include <map>
-#include <unistd.h>
+#include <string>
 
-#include "commandhandler.hpp"
-#include "../sqliteconnector/sqliteconnector.hpp"
-#include "../tcpconnection/tcpconnection.hpp"
-#include "../sqlitequery/sqlitequery.hpp"
+#include "../authverifier/authverifier.hpp"
 #include "../misc/queries.hpp"
+#include "../sqliteconnector/sqliteconnector.hpp"
+#include "../sqlitequery/sqlitequery.hpp"
+#include "../tcpconnection/tcpconnection.hpp"
+#include "commandhandler.hpp"
 
-CommandHandlerError::CommandHandlerError(const std::string message){
-    this->message = message;
+CommandHandlerError::CommandHandlerError(const std::string message) {
+  this->message = message;
 }
 
-CommandHandlerBadArgumentsError::CommandHandlerBadArgumentsError(const std::string command, const std::string expected)
-    : CommandHandlerError("Incorrect number of parameters for command "+command+". Expected: "+expected){
+CommandHandlerBadArgumentsError::CommandHandlerBadArgumentsError(
+    const std::string command,
+    const std::string expected)
+    : CommandHandlerError("Incorrect number of parameters for command " +
+                          command + ". Expected: " + expected) {}
 
+std::string CommandHandlerError::what() {
+  return this->message;
 }
 
-std::string CommandHandlerError::what(){
-    return this->message;
+CommandHandler::CommandHandler(TCPConnection& conn, SQLiteConnector& dbC)
+    : dbConnector(dbC), connection(conn), authVerifier(conn, dbC) {
+  addCommandFunction("help", std::bind(&CommandHandler::helpCommand, this,
+                                       std::placeholders::_1));
+  addCommandFunction("register", std::bind(&CommandHandler::registerCommand,
+                                           this, std::placeholders::_1));
+  addCommandFunction("login", std::bind(&CommandHandler::loginCommand, this,
+                                        std::placeholders::_1));
+  addCommandFunction("logoff", std::bind(&CommandHandler::logoffCommand, this,
+                                         std::placeholders::_1));
+  addCommandFunction("list", std::bind(&CommandHandler::listCommand, this,
+                                       std::placeholders::_1));
+  addCommandFunction("grant", std::bind(&CommandHandler::grantCommand, this,
+                                        std::placeholders::_1));
+  addCommandFunction("revoke", std::bind(&CommandHandler::revokeCommand, this,
+                                         std::placeholders::_1));
+  addCommandFunction("shutdown", std::bind(&CommandHandler::shutdownCommand,
+                                           this, std::placeholders::_1));
+  addCommandFunction("exit", std::bind(&CommandHandler::exitCommand, this,
+                                       std::placeholders::_1));
+  addCommandFunction("clientlist", std::bind(&CommandHandler::clientlistCommand,
+                                             this, std::placeholders::_1));
 }
 
-CommandHandler::CommandHandler(TCPConnection &conn, SQLiteConnector &dbC) : dbConnector(dbC), connection(conn) {
-    addCommandFunction("help", std::bind(&CommandHandler::helpCommand, this, std::placeholders::_1));
-    addCommandFunction("register", std::bind(&CommandHandler::registerCommand, this, std::placeholders::_1));
-    addCommandFunction("login", std::bind(&CommandHandler::loginCommand, this, std::placeholders::_1));
-    addCommandFunction("logoff", std::bind(&CommandHandler::logoffCommand, this, std::placeholders::_1));
-    addCommandFunction("list", std::bind(&CommandHandler::listCommand, this, std::placeholders::_1));
-    addCommandFunction("grant", std::bind(&CommandHandler::grantCommand, this, std::placeholders::_1));
-    addCommandFunction("revoke", std::bind(&CommandHandler::revokeCommand, this, std::placeholders::_1));
-    addCommandFunction("shutdown", std::bind(&CommandHandler::shutdownCommand, this, std::placeholders::_1));
-    addCommandFunction("exit", std::bind(&CommandHandler::exitCommand, this, std::placeholders::_1));
-    addCommandFunction("clientlist", std::bind(&CommandHandler::clientlistCommand, this, std::placeholders::_1));
+void CommandHandler::addCommandFunction(std::string command,
+                                        const commandFunction& func) {
+  commandFunctions[command] = func;
 }
 
-void CommandHandler::addCommandFunction(std::string command, const commandFunction& func) {
-    commandFunctions[command] = func;
-}
-
-std::string CommandHandler::handleCommand(std::string command, paramDeque params) {
-    auto it = commandFunctions.find(command);
-    if (it != commandFunctions.end()) {
-        return it->second(params);
-    } else {
-        throw CommandHandlerError("Unknown command: " + command);
+std::string CommandHandler::handleCommand(std::string command,
+                                          paramDeque params) {
+  auto it = commandFunctions.find(command);
+  if (it != commandFunctions.end()) {
+    if (!authVerifier.verifyCommand(command, params)) {
+      throw CommandHandlerError("Command isn't supported in current mode");
     }
+    return it->second(params);
+  } else {
+    throw CommandHandlerError("Unknown command: " + command);
+  }
 }
 
-std::string CommandHandler::registerCommand(paramDeque params){
-    if (params.size() != 1){
-        throw CommandHandlerError("Incorrect number of parameters for command register. Expected: register [name]");
-    }
+std::string CommandHandler::registerCommand(paramDeque params) {
+  if (params.size() != 1) {
+    throw CommandHandlerError(
+        "Incorrect number of parameters for command register. Expected: "
+        "register [name]");
+  }
 
-    std::string username = params[0];
+  std::string username = params[0];
 
-    try{
-        SQLiteQuery query = SQLiteQuery(INSERT_USER, this->dbConnector);
-        query.bindText(1, username);
-        query.runOperation();
-    }catch(SQLiteQueryError &e){
-        throw CommandHandlerError("Error: "+e.what());
-    }
-    
-    return "Registered new user: "+username;
+  try {
+    SQLiteQuery query = SQLiteQuery(INSERT_USER, this->dbConnector);
+    query.bindText(1, username);
+    query.runOperation();
+  } catch (SQLiteQueryError& e) {
+    throw CommandHandlerError("Error: " + e.what());
+  }
+
+  return "Registered new user: " + username;
 }
 
-std::string CommandHandler::clientlistCommand(paramDeque params){
-    if (params.size() != 0){
-        throw CommandHandlerError("Incorrect number of parameters for command clientlist. Expected: clientlist");
-    }
+std::string CommandHandler::clientlistCommand(paramDeque params) {
+  if (params.size() != 0) {
+    throw CommandHandlerError(
+        "Incorrect number of parameters for command clientlist. Expected: "
+        "clientlist");
+  }
 
-    std::string resultString = "List of available clients:\n";
+  std::string resultString = "List of available clients:\n";
 
-    SQLiteQuery query = SQLiteQuery(SELECT_USERS, this->dbConnector);
-    auto rows = query.runQuery();
-    for (auto row : rows){
-        resultString += row.at("username")+"\n";
-    }
-    
+  SQLiteQuery query = SQLiteQuery(SELECT_USERS, this->dbConnector);
+  auto rows = query.runQuery();
+  for (auto row : rows) {
+    resultString += row.at("username") + "\n";
+  }
 
-    return resultString;
+  return resultString;
 }
 
-std::string CommandHandler::loginCommand(paramDeque params){
-    if (params.size() != 1){
-        throw CommandHandlerError("Incorrect number of parameters for command login. Expected: login [name]");
-    }
+std::string CommandHandler::loginCommand(paramDeque params) {
+  if (params.size() != 1) {
+    throw CommandHandlerError(
+        "Incorrect number of parameters for command login. Expected: login "
+        "[name]");
+  }
 
-    return "LOGIN";
+  std::string username = params[0];
+
+  SQLiteQuery query = SQLiteQuery(SELECT_USER_ID, this->dbConnector);
+  query.bindText(1, username);
+  int userid = std::stoi(query.runQuery().at(0).at("rowid"));
+
+  // query = SQLiteQuery(INSERT_MACHINE, dbConnector);
+  // query.bindText(1, "x"); // TODO
+  // query.runOperation();
+
+  return "Zalogowano użytkownika " + username;
 }
 
-std::string CommandHandler::logoffCommand(paramDeque params){
-    if (params.size() != 0){
-        throw CommandHandlerError("Incorrect number of parameters for command logoff. Expected: logoff");
-    }
+std::string CommandHandler::logoffCommand(paramDeque params) {
+  if (params.size() != 0) {
+    throw CommandHandlerError(
+        "Incorrect number of parameters for command logoff. Expected: logoff");
+  }
 
-    return "LOGOFF";
+  return "LOGOFF";
 }
 
-std::string CommandHandler::listCommand(paramDeque params){
-    if (params.size() != 0){
-        throw CommandHandlerError("Incorrect number of parameters for command list. Expected: list");
-    }
+std::string CommandHandler::listCommand(paramDeque params) {
+  if (params.size() != 0) {
+    throw CommandHandlerError(
+        "Incorrect number of parameters for command list. Expected: list");
+  }
 
-    return "LIST";
+  return "LIST";
 }
 
-std::string CommandHandler::grantCommand(paramDeque params){
-    if (params.size() != 2){
-        throw CommandHandlerError("Incorrect number of parameters for command grant. Expected: grant [name] [IP]");
-    }
+std::string CommandHandler::grantCommand(paramDeque params) {
+  if (params.size() != 2) {
+    throw CommandHandlerError(
+        "Incorrect number of parameters for command grant. Expected: grant "
+        "[name] [IP]");
+  }
 
-    return "GRANT";
+  return "GRANT";
 }
 
-std::string CommandHandler::revokeCommand(paramDeque params){
-    if (params.size() != 2){
-        throw CommandHandlerError("Incorrect number of parameters for command revoke. Expected: revoke [name] [IP]");
-    }
+std::string CommandHandler::revokeCommand(paramDeque params) {
+  if (params.size() != 2) {
+    throw CommandHandlerError(
+        "Incorrect number of parameters for command revoke. Expected: revoke "
+        "[name] [IP]");
+  }
 
-    return "REVOKE";
+  return "REVOKE";
 }
 
-std::string CommandHandler::shutdownCommand(paramDeque params){
-    if (params.size() != 1){
-        throw CommandHandlerError("Incorrect number of parameters for command shutdown. Expected: shutdown [IP]");
-    }
+std::string CommandHandler::shutdownCommand(paramDeque params) {
+  if (params.size() != 1) {
+    throw CommandHandlerError(
+        "Incorrect number of parameters for command shutdown. Expected: "
+        "shutdown [IP]");
+  }
 
-    return "SHUTDOWN";
+  return "SHUTDOWN";
 }
 
-std::string CommandHandler::exitCommand(paramDeque params){
-    if (params.size() != 0){
-        throw CommandHandlerError("Incorrect number of parameters for command exit. Expected: exit");
-    }
+std::string CommandHandler::exitCommand(paramDeque params) {
+  if (params.size() != 0) {
+    throw CommandHandlerError(
+        "Incorrect number of parameters for command exit. Expected: exit");
+  }
 
-    return "";
+  return "";
 }
 
-std::string CommandHandler::helpCommand(paramDeque params){
-    if (params.size() != 0){
-        throw CommandHandlerError("Incorrect number of parameters for command help. Expected: help");
-    }
+std::string CommandHandler::helpCommand(paramDeque params) {
+  if (params.size() != 0) {
+    throw CommandHandlerError(
+        "Incorrect number of parameters for command help. Expected: help");
+  }
 
-    std::string helpMsg = 
-                        "- register [name] - add a new client\n"
-                        "- clientlist - list of available clients\n"
-                        "- login [name] - add current machine as [name] client's machine\n"
-                        "- logoff - remove current machine from [name] client's machines\n"
-                        "- list - list of available machines and permissions to them for current client\n"
-                        "- grant [name] [IP] - grant client [name] permission to shutdown machine [IP]\n"
-                        "- revoke [name] [IP] - revoke client's [name] permission to shutdown machine [IP]\n"
-                        "- shutdown [IP] - shutdown machine [IP]\n"
-                        "- exit - exit from application";
+  std::string helpMsg =
+      "- register [name] - add a new client\n"
+      "- clientlist - list of available clients\n"
+      "- login [name] - add current machine as [name] client's machine\n"
+      "- logoff - remove current machine from [name] client's machines\n"
+      "- list - list of available machines and permissions to them for current "
+      "client\n"
+      "- grant [name] [IP] - grant client [name] permission to shutdown "
+      "machine [IP]\n"
+      "- revoke [name] [IP] - revoke client's [name] permission to shutdown "
+      "machine [IP]\n"
+      "- shutdown [IP] - shutdown machine [IP]\n"
+      "- exit - exit from application";
 
-    return helpMsg;
+  return helpMsg;
 }
 
-CommandHandler::~CommandHandler(){
-    
-}
+CommandHandler::~CommandHandler() {}

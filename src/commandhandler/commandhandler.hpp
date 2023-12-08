@@ -6,22 +6,28 @@
 #include "../misc/types.hpp"
 #include "../sqliteconnector/sqliteconnector.hpp"
 #include "../tcpconnection/tcpconnection.hpp"
+#include "../authverifier/authverifier.hpp"
 
-class CommandHandlerError : public std::exception {
+class CommandHandlerError : public std::exception
+{
     std::string message;
-    public:
+
+public:
     CommandHandlerError(const std::string message);
     std::string what();
 };
 
-class CommandHandlerBadArgumentsError : public CommandHandlerError{
-    public:
+class CommandHandlerBadArgumentsError : public CommandHandlerError
+{
+public:
     CommandHandlerBadArgumentsError(const std::string command, const std::string expected);
 };
 
-class CommandHandler{
-    SQLiteConnector& dbConnector;
-    TCPConnection& connection;
+class CommandHandler
+{
+    SQLiteConnector &dbConnector;
+    TCPConnection &connection;
+    AuthVerifier authVerifier;
     commandFunctionMap commandFunctions;
 
     std::string helpCommand(paramDeque params);
@@ -37,9 +43,9 @@ class CommandHandler{
 
     bool correctArgumentCountCheck(int argc, std::string command, std::string expected);
 
-    public:
-        CommandHandler(TCPConnection &conn, SQLiteConnector &dbC);
-        void addCommandFunction(std::string command, const commandFunction& func);
-        std::string handleCommand(std::string command, paramDeque params);
-        ~CommandHandler();
+public:
+    CommandHandler(TCPConnection &conn, SQLiteConnector &dbC);
+    void addCommandFunction(std::string command, const commandFunction &func);
+    std::string handleCommand(std::string command, paramDeque params);
+    ~CommandHandler();
 };

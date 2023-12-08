@@ -1,26 +1,30 @@
 #pragma once
-extern "C" {
-#include <sqlite3.h>
+extern "C"
+{
+#include "../../include/sqlite3.h"
 }
 #include <string>
 #include <vector>
 #include <map>
 
-class DatabaseError : public std::exception {
+class DatabaseError : public std::exception
+{
     std::string message;
-    public:
+
+public:
     DatabaseError(const std::string message);
     std::string what();
 };
 
-class SQLiteConnector{
+class SQLiteConnector
+{
     std::string dbName;
-    sqlite3* db;
+    sqlite3 *db;
 
-    public:
-        SQLiteConnector(std::string dbName);
-        void initDatabase();
-        int howManyTables();
-        sqlite3* getDatabase();
-        ~SQLiteConnector();
+public:
+    SQLiteConnector(std::string dbName);
+    void initDatabase();
+    int howManyTables();
+    sqlite3 *getDatabase();
+    ~SQLiteConnector();
 };
