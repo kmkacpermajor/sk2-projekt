@@ -36,8 +36,9 @@ std::string TCPConnection::getCurrentUser() { return this->currentUser; }
 
 int TCPConnection::getClientFD() { return this->clientFD; }
 
-void TCPConnection::setCurrentUser(std::string username) {
+void TCPConnection::setCurrentUser(std::string username, int id) {
   this->currentUser = username;
+  this->currentUserID = id;
 }
 
 std::string TCPConnection::getMessage() {

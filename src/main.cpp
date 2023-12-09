@@ -42,13 +42,9 @@ void handleNewServerConnection(int serverFD)
     try
     {
       paramDeque params = commandParser.parseCommand(message);
-      if (params.empty())
-      {
-        throw CommandParserError("Empty command given");
-      }
+      
       std::string command = params.front();
       params.pop_front();
-      std::cout << command << "with " << params.size() << std::endl;
 
       AuthVerifier(connection, dbConnector).verifyCommand(command, params);
 
@@ -63,7 +59,8 @@ void handleNewServerConnection(int serverFD)
     {
       response = e.what();
       std::cout << "Error occurred when parsing command: " << message << ": " << e.what() << std::endl;
-    }catch(AuthVerifierError& e){
+    }catch(AuthVerifierError& e)
+    {
       response = e.what();
       std::cout << "Error occurred when authorizing command: " << message << ": " << e.what() << std::endl;
     }

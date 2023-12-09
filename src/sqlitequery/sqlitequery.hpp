@@ -23,7 +23,9 @@ class SQLiteQuery
 
 public:
     SQLiteQuery(std::string sql, SQLiteConnector *dbConnector);
-    void runOperation();
+    SQLiteQuery(std::string sql, sqlite3 *db);
+    int runOperation();
+    int getLastId();
     void checkForError(int sqliteStatus);
     void bindText(int index, std::string value);
     void bindInt(int index, int value);

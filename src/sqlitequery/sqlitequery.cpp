@@ -8,6 +8,7 @@ extern "C"
 
 #include "sqlitequery.hpp"
 #include "../sqliteconnector/sqliteconnector.hpp"
+#include "../misc/queries.hpp"
 
 SQLiteQueryError::SQLiteQueryError(const std::string message)
 {
@@ -26,6 +27,13 @@ SQLiteQuery::SQLiteQuery(std::string sql, SQLiteConnector *dbConnector)
     checkForError(sqliteStatus);
 }
 
+SQLiteQuery::SQLiteQuery(std::string sql, sqlite3 *db)
+{
+    this->db = db;
+    int sqliteStatus = sqlite3_prepare_v2(this->db, sql.c_str(), -1, &this->statement, NULL);
+    checkForError(sqliteStatus);
+}
+
 void SQLiteQuery::checkForError(int sqliteStatus)
 {
     if (sqliteStatus != SQLITE_OK && sqliteStatus != SQLITE_DONE)
@@ -35,10 +43,16 @@ void SQLiteQuery::checkForError(int sqliteStatus)
     }
 }
 
-void SQLiteQuery::runOperation()
+int SQLiteQuery::getLastId()
+{
+    return std::stoi(SQLiteQuery(SELECT_LAST_ID, db).runQuery().at(0).at("rowid"));
+}
+
+int SQLiteQuery::runOperation()
 {
     int sqliteStatus = sqlite3_step(this->statement);
     checkForError(sqliteStatus);
+    return getLastId(); // returns last id (id updates after insert, not update)
 }
 
 void SQLiteQuery::bindText(int index, std::string text)

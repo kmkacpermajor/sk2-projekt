@@ -13,13 +13,13 @@
 
 #define SELECT_MACHINE_ID "SELECT rowid FROM machines WHERE ip_address = ?"
 
-#define SELECT_LAST_ID "SELECT last_insert_rowid()"
+#define SELECT_LAST_ID "SELECT last_insert_rowid() rowid"
 
 #define SELECT_MACHINES_AND_PERMISSIONS "SELECT m.ip_address, m.state, a. FROM machines m LEFT OUTER JOIN allowed_shutdowns a ON m.rowid = a.machine_id WHERE a.user_id = ?"
 
 #define INSERT_USER "INSERT INTO users (username) VALUES (?)"
 
-#define INSERT_MACHINE "INSERT INTO machines (ip_address, state) VALUES (?, 1)"
+#define INSERT_MACHINE "INSERT INTO machines (ip_address, file_descriptor, state) VALUES (?, ?, 1)"
 
 #define INSERT_ALLOWED_SHUTDOWN "INSERT INTO allowed_shutdowns (user_id, machine_id) SELECT u.rowid, m.rowid FROM users u INNER JOIN machines m WHERE u.username = ? OR m.ip_address = ?"
 

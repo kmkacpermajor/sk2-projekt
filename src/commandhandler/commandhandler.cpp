@@ -57,9 +57,6 @@ std::string CommandHandler::handleCommand(std::string command,
                                           paramDeque params) {
   auto it = commandFunctions.find(command);
   if (it != commandFunctions.end()) {
-    if (!authVerifier.verifyCommand(command, params)) {
-      throw CommandHandlerError("Command isn't supported in current mode");
-    }
     return it->second(params);
   } else {
     throw CommandHandlerError("Unknown command: " + command);
@@ -115,7 +112,12 @@ std::string CommandHandler::loginCommand(paramDeque params) {
 
   SQLiteQuery query = SQLiteQuery(SELECT_USER_ID, &dbConnector);
   query.bindText(1, username);
-  int userid = std::stoi(query.runQuery().at(0).at("rowid"));
+  auto result = query.runQuery();
+  if (result.empty()){
+    throw CommandHandlerError("User with username "+username+" doesn't exist");
+  }
+
+  connection.setCurrentUser(username, std::stoi(result.at(0).at("rowid")));
 
   query = SQLiteQuery(INSERT_MACHINE, &dbConnector);
   query.bindText(1, "x"); // TODO

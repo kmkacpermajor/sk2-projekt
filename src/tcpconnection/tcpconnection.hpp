@@ -24,7 +24,7 @@ class TCPConnection {
   std::string getMessage();
   std::string getCurrentUser();
   void setClientFD(int fd);
-  void setCurrentUser(std::string username);
+  void setCurrentUser(std::string username, int id);
   void sendMessage(std::string message);
   int getClientFD();
   ~TCPConnection();
