@@ -5,6 +5,13 @@
 #include "../tcpconnection/tcpconnection.hpp"
 #include "../sqliteconnector/sqliteconnector.hpp"
 
+class AuthVerifierError : public std::exception {
+    std::string message;
+    public:
+    AuthVerifierError(const std::string message);
+    std::string what();
+};
+
 class AuthVerifier
 {
     TCPConnection &connection;

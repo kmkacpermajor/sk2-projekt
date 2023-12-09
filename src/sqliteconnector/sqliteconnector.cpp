@@ -37,12 +37,12 @@ void SQLiteConnector::initDatabase()
 {
     try
     {
-        int howManyTables = std::stoi(SQLiteQuery(HOW_MANY_TABLES, *this).runQuery().at(0).at("count"));
+        int howManyTables = std::stoi(SQLiteQuery(HOW_MANY_TABLES, this).runQuery().at(0).at("count"));
         if (howManyTables != NUM_OF_TABLES)
         {
-            SQLiteQuery(CREATE_USERS, *this).runOperation();
-            SQLiteQuery(CREATE_MACHINES, *this).runOperation();
-            SQLiteQuery(CREATE_ALLOWED_SHUTDOWNS, *this).runOperation();
+            SQLiteQuery(CREATE_USERS, this).runOperation();
+            SQLiteQuery(CREATE_MACHINES, this).runOperation();
+            SQLiteQuery(CREATE_ALLOWED_SHUTDOWNS, this).runOperation();
         }
     }
     catch (SQLiteQueryError &e)

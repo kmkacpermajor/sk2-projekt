@@ -19,9 +19,9 @@ std::string SQLiteQueryError::what()
     return this->message;
 }
 
-SQLiteQuery::SQLiteQuery(std::string sql, SQLiteConnector dbConnector)
+SQLiteQuery::SQLiteQuery(std::string sql, SQLiteConnector *dbConnector)
 {
-    this->db = dbConnector.getDatabase();
+    this->db = dbConnector->getDatabase();
     int sqliteStatus = sqlite3_prepare_v2(this->db, sql.c_str(), -1, &this->statement, NULL);
     checkForError(sqliteStatus);
 }

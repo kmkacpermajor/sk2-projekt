@@ -13,6 +13,7 @@
 #include "sqliteconnector/sqliteconnector.hpp"
 #include "commandhandler/commandhandler.hpp"
 #include "commandparser/commandparser.hpp"
+#include "authverifier/authverifier.hpp"
 
 std::mutex m;
 
@@ -49,6 +50,8 @@ void handleNewServerConnection(int serverFD)
       params.pop_front();
       std::cout << command << "with " << params.size() << std::endl;
 
+      AuthVerifier(connection, dbConnector).verifyCommand(command, params);
+
       response = commandHandler.handleCommand(command, params);
     }
     catch (CommandHandlerError &e)
@@ -59,7 +62,10 @@ void handleNewServerConnection(int serverFD)
     catch (CommandParserError &e)
     {
       response = e.what();
-      std::cout << "Error occurred when handling command: " << message << ": " << e.what() << std::endl;
+      std::cout << "Error occurred when parsing command: " << message << ": " << e.what() << std::endl;
+    }catch(AuthVerifierError& e){
+      response = e.what();
+      std::cout << "Error occurred when authorizing command: " << message << ": " << e.what() << std::endl;
     }
 
     if (response.length() == 0)

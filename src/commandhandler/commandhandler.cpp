@@ -76,7 +76,7 @@ std::string CommandHandler::registerCommand(paramDeque params) {
   std::string username = params[0];
 
   try {
-    SQLiteQuery query = SQLiteQuery(INSERT_USER, this->dbConnector);
+    SQLiteQuery query = SQLiteQuery(INSERT_USER, &dbConnector);
     query.bindText(1, username);
     query.runOperation();
   } catch (SQLiteQueryError& e) {
@@ -95,7 +95,7 @@ std::string CommandHandler::clientlistCommand(paramDeque params) {
 
   std::string resultString = "List of available clients:\n";
 
-  SQLiteQuery query = SQLiteQuery(SELECT_USERS, this->dbConnector);
+  SQLiteQuery query = SQLiteQuery(SELECT_USERS, &dbConnector);
   auto rows = query.runQuery();
   for (auto row : rows) {
     resultString += row.at("username") + "\n";
@@ -113,13 +113,13 @@ std::string CommandHandler::loginCommand(paramDeque params) {
 
   std::string username = params[0];
 
-  SQLiteQuery query = SQLiteQuery(SELECT_USER_ID, this->dbConnector);
+  SQLiteQuery query = SQLiteQuery(SELECT_USER_ID, &dbConnector);
   query.bindText(1, username);
   int userid = std::stoi(query.runQuery().at(0).at("rowid"));
 
-  // query = SQLiteQuery(INSERT_MACHINE, dbConnector);
-  // query.bindText(1, "x"); // TODO
-  // query.runOperation();
+  query = SQLiteQuery(INSERT_MACHINE, &dbConnector);
+  query.bindText(1, "x"); // TODO
+  query.runOperation();
 
   return "Zalogowano użytkownika " + username;
 }

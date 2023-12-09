@@ -22,7 +22,7 @@ class SQLiteQuery
     sqlite3 *db;
 
 public:
-    SQLiteQuery(std::string sql, SQLiteConnector dbConnector);
+    SQLiteQuery(std::string sql, SQLiteConnector *dbConnector);
     void runOperation();
     void checkForError(int sqliteStatus);
     void bindText(int index, std::string value);
