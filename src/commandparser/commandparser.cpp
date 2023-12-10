@@ -19,12 +19,7 @@ CommandParser::CommandParser()
 }
 
 std::deque<std::string> CommandParser::parseCommand(std::string command)
-{
-    if (command.empty())
-      {
-        throw CommandParserError("Empty command given");
-      }
-    
+{  
     std::deque<std::string> deque;
     std::istringstream iss(command);
     std::string s;

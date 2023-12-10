@@ -11,11 +11,19 @@
 #include "../misc/const.hpp"
 #include "../misc/stringTrim.hpp"
 
+ConnectionEndedException::ConnectionEndedException() {}
+
 ConnectionError::ConnectionError(int err) { this->err = err; }
 
 std::string ConnectionError::what() { return strerror(this->err); }
 
 TCPConnection::TCPConnection(int serverFD, std::mutex& m) : mutex(m) {
+  setServerFD(serverFD);
+}
+
+TCPConnection::TCPConnection(std::mutex& m) : mutex(m) {}
+
+void TCPConnection::setServerFD(int serverFD) {
   socklen_t sl;
   struct sockaddr_in caddr;
   sl = sizeof(caddr);
@@ -26,19 +34,24 @@ TCPConnection::TCPConnection(int serverFD, std::mutex& m) : mutex(m) {
   IPAddress = inet_ntoa((struct in_addr)caddr.sin_addr);
 }
 
-TCPConnection::TCPConnection(std::mutex& m) : mutex(m) {}
-
 void TCPConnection::setClientFD(int fd) { clientFD = fd; }
 
-std::string TCPConnection::getIPAddress() { return this->IPAddress; }
+void TCPConnection::logout() {
+  currentUser = "";
+  currentUserID = -1;
+}
 
-std::string TCPConnection::getCurrentUser() { return this->currentUser; }
+std::string TCPConnection::getIPAddress() { return IPAddress; }
 
-int TCPConnection::getClientFD() { return this->clientFD; }
+std::string TCPConnection::getCurrentUser() { return currentUser; }
+
+int TCPConnection::getCurrentUserID() { return currentUserID; }
+
+int TCPConnection::getClientFD() { return clientFD; }
 
 void TCPConnection::setCurrentUser(std::string username, int id) {
-  this->currentUser = username;
-  this->currentUserID = id;
+  currentUser = username;
+  currentUserID = id;
 }
 
 std::string TCPConnection::getMessage() {
@@ -61,8 +74,10 @@ std::string TCPConnection::getMessage() {
 
 void TCPConnection::sendMessage(std::string message) {
   std::lock_guard<std::mutex> lock(mutex);
-  send(this->clientFD, message.c_str(), message.length(), 0);
-  // Tu rzuca broken pipe
+  int status = send(clientFD, message.c_str(), message.length(), 0);
+  if (status == EPIPE){
+    throw ConnectionEndedException();
+  }
 }
 
-TCPConnection::~TCPConnection() { close(this->clientFD); }
+TCPConnection::~TCPConnection() { close(clientFD); }

@@ -14,6 +14,8 @@
 #include "commandhandler/commandhandler.hpp"
 #include "commandparser/commandparser.hpp"
 #include "authverifier/authverifier.hpp"
+#include "sqlitequery/sqlitequery.hpp"
+#include "misc/queries.hpp"
 
 std::mutex m;
 
@@ -23,7 +25,24 @@ void handleNewServerConnection(int serverFD)
   auto dbConnector = SQLiteConnector(DB_NAME);
   auto commandParser = CommandParser();
   auto commandHandler = CommandHandler(connection, dbConnector);
-  connection.sendMessage("Połączono z serwerem");
+
+  try{
+    try{
+      auto ownerRow = SQLiteQuery(SELECT_MACHINE_OWNER, &dbConnector).bindText(1, connection.getIPAddress())->runQuery().at(0);
+      SQLiteQuery(SET_STATUS, &dbConnector).bindInt(1, 1)->bindText(2, connection.getIPAddress())->runOperation();
+      connection.setCurrentUser(ownerRow.at("username"), std::stoi(ownerRow.at("id")));
+    }catch (std::out_of_range& e){
+      std::cout << "No user for current machine. Not relogging" << std::endl;
+    }
+  }catch(SQLiteQueryError& e){
+    std::cout << "Error occurred when trying to relogin: " << e.what() << std::endl;
+  }
+
+  if (connection.getCurrentUser() == ""){
+    connection.sendMessage("Połączono z serwerem");
+  }else{
+    connection.sendMessage("Połączono z serwerem jako użytkownik "+connection.getCurrentUser());
+  }
 
   while (1)
   {
@@ -41,14 +60,18 @@ void handleNewServerConnection(int serverFD)
 
     try
     {
-      paramDeque params = commandParser.parseCommand(message);
-      
-      std::string command = params.front();
-      params.pop_front();
+      if (message.empty()){
+        response = "Empty message given";
+      }else{
+        paramDeque params = commandParser.parseCommand(message);
+        
+        std::string command = params.front();
+        params.pop_front();
 
-      AuthVerifier(connection, dbConnector).verifyCommand(command, params);
+        AuthVerifier(connection, dbConnector).verifyCommand(command, params);
 
-      response = commandHandler.handleCommand(command, params);
+        response = commandHandler.handleCommand(command, params);
+      }
     }
     catch (CommandHandlerError &e)
     {
@@ -77,6 +100,9 @@ void handleNewServerConnection(int serverFD)
     catch (ConnectionError &e)
     {
       std::cout << "Error occurred when sending response: " << e.what() << std::endl;
+    }
+    catch (ConnectionEndedException &e){
+      return;
     }
   }
 }

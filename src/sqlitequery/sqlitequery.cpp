@@ -5,6 +5,7 @@ extern "C"
 #include <string>
 #include <vector>
 #include <map>
+#include <iostream>
 
 #include "sqlitequery.hpp"
 #include "../sqliteconnector/sqliteconnector.hpp"
@@ -50,39 +51,48 @@ int SQLiteQuery::getLastId()
 
 int SQLiteQuery::runOperation()
 {
+    auto out = sqlite3_expanded_sql(this->statement);
+    std::cout << "Running SQL: " << out << std::endl;
     int sqliteStatus = sqlite3_step(this->statement);
     checkForError(sqliteStatus);
     return getLastId(); // returns last id (id updates after insert, not update)
 }
 
-void SQLiteQuery::bindText(int index, std::string text)
-{
-    int sqliteStatus = sqlite3_bind_text(this->statement, index, text.c_str(), -1, NULL);
+SQLiteQuery* SQLiteQuery::bindText(int index, std::string text)
+{   
+    int sqliteStatus = sqlite3_bind_text(this->statement, index, text.c_str(), text.length(), SQLITE_TRANSIENT);
     checkForError(sqliteStatus);
+
+    return this;
 }
 
-void SQLiteQuery::bindInt(int index, int text)
+SQLiteQuery* SQLiteQuery::bindInt(int index, int text)
 {
     int sqliteStatus = sqlite3_bind_int(this->statement, index, text);
     checkForError(sqliteStatus);
+
+    return this;
 }
 
 std::vector<std::map<std::string, std::string>> SQLiteQuery::runQuery()
 {
+    auto out = sqlite3_expanded_sql(this->statement);
+    std::cout << "Running SQL: " << out << std::endl;
     std::vector<std::map<std::string, std::string>> vectorOfMaps;
     int sqliteStatus;
-    int col = 0;
+    int colCount = sqlite3_column_count(this->statement);
 
     while ((sqliteStatus = sqlite3_step(this->statement)) == SQLITE_ROW)
     {
         std::map<std::string, std::string> row;
-        char *result = (char *)sqlite3_column_text(this->statement, col);
-        char *colName = (char *)sqlite3_column_name(this->statement, col);
-        std::string resultString(result);
-        std::string colNameString(colName);
-        row[colNameString] = resultString;
+        for(int col = 0; col < colCount; col++){
+            char *result = (char *)sqlite3_column_text(this->statement, col);
+            char *colName = (char *)sqlite3_column_name(this->statement, col);
+            std::string resultString(result);
+            std::string colNameString(colName);
+            row[colNameString] = resultString;
+        }
         vectorOfMaps.push_back(row);
-        col++;
     }
 
     checkForError(sqliteStatus);

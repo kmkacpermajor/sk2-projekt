@@ -21,6 +21,16 @@ def readInput(sock):
             else:
                 print("> ", end="")
 
+def recvall(sock):
+    BUFF_SIZE = 4096
+    data = b''
+    while True:
+        part = sock.recv(BUFF_SIZE)
+        data += part
+        if len(part) < BUFF_SIZE:
+            break
+    return data
+
 if len(sys.argv) != 3:
     print("Bad arguments given. Expected: python3 client.py [IP] [PORT]")
     exit(1)
@@ -34,10 +44,10 @@ with socket.socket() as sock:
             print('Exiting...')
             sys.exit(0)
 
-        msg = str(sock.recv(4096), encoding='UTF-8').rstrip()
+        msg = str(recvall(sock), encoding='UTF-8').rstrip()
 
         if len(msg) > 0:
-            if "close" in msg:
+            if msg == "close":
                 # subprocess.run(["sleep", "1"])
                 print("shutting down")
                 exit()
