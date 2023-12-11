@@ -74,7 +74,8 @@ std::string TCPConnection::getMessage() {
 
 void TCPConnection::sendMessage(std::string message) {
   std::lock_guard<std::mutex> lock(mutex);
-  int status = send(clientFD, message.c_str(), message.length(), 0);
+  int status = send(clientFD, message.c_str(), message.length(), MSG_NOSIGNAL);
+
   if (status == EPIPE){
     throw ConnectionEndedException();
   }

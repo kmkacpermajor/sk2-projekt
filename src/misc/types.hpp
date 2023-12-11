@@ -5,5 +5,7 @@
 #include <map>
 
 using paramDeque = std::deque<std::string>;
-using commandFunction = std::function<std::string(paramDeque)>;
-using commandFunctionMap = std::map<std::string, commandFunction>;
+using commandStringFunction = std::function<std::string(paramDeque)>;
+using commandVoidFunction = std::function<void(paramDeque)>;
+using commandStringFunctionMap = std::map<std::string, commandStringFunction>;
+using commandVoidFunctionMap = std::map<std::string, commandVoidFunction>;

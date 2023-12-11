@@ -17,18 +17,11 @@ public:
     std::string what();
 };
 
-class CommandHandlerBadArgumentsError : public CommandHandlerError
-{
-public:
-    CommandHandlerBadArgumentsError(const std::string command, const std::string expected);
-};
-
 class CommandHandler
 {
     SQLiteConnector &dbConnector;
     TCPConnection &connection;
-    AuthVerifier authVerifier;
-    commandFunctionMap commandFunctions;
+    commandStringFunctionMap commandFunctions;
 
     std::string helpCommand(paramDeque params);
     std::string registerCommand(paramDeque params);
@@ -45,7 +38,7 @@ class CommandHandler
 
 public:
     CommandHandler(TCPConnection &conn, SQLiteConnector &dbC);
-    void addCommandFunction(std::string command, const commandFunction &func);
+    void addCommandFunction(std::string command, const commandStringFunction &func);
     std::string handleCommand(std::string command, paramDeque params);
     ~CommandHandler();
 };

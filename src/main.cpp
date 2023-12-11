@@ -61,7 +61,7 @@ void handleNewServerConnection(int serverFD)
     try
     {
       if (message.empty()){
-        response = "Empty message given";
+        response = "";
       }else{
         paramDeque params = commandParser.parseCommand(message);
         

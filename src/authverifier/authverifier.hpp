@@ -25,4 +25,5 @@ class AuthVerifier
 public:
     AuthVerifier(TCPConnection &conn, SQLiteConnector &dbC);
     void verifyCommand(std::string command, std::deque<std::string> params);
+    void verifyShutdown(std::string params);
 };

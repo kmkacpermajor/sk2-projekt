@@ -3,7 +3,6 @@
 #include <map>
 #include <string>
 
-#include "../authverifier/authverifier.hpp"
 #include "../misc/queries.hpp"
 #include "../sqliteconnector/sqliteconnector.hpp"
 #include "../sqlitequery/sqlitequery.hpp"
@@ -14,18 +13,12 @@ CommandHandlerError::CommandHandlerError(const std::string message) {
   this->message = message;
 }
 
-CommandHandlerBadArgumentsError::CommandHandlerBadArgumentsError(
-    const std::string command,
-    const std::string expected)
-    : CommandHandlerError("Incorrect number of parameters for command " +
-                          command + ". Expected: " + expected) {}
-
 std::string CommandHandlerError::what() {
   return this->message;
 }
 
 CommandHandler::CommandHandler(TCPConnection& conn, SQLiteConnector& dbC)
-    : dbConnector(dbC), connection(conn), authVerifier(conn, dbC) {
+    : dbConnector(dbC), connection(conn) {
   addCommandFunction("help", std::bind(&CommandHandler::helpCommand, this,
                                        std::placeholders::_1));
   addCommandFunction("register", std::bind(&CommandHandler::registerCommand,
@@ -49,7 +42,7 @@ CommandHandler::CommandHandler(TCPConnection& conn, SQLiteConnector& dbC)
 }
 
 void CommandHandler::addCommandFunction(std::string command,
-                                        const commandFunction& func) {
+                                        const commandStringFunction& func) {
   commandFunctions[command] = func;
 }
 
@@ -64,12 +57,6 @@ std::string CommandHandler::handleCommand(std::string command,
 }
 
 std::string CommandHandler::registerCommand(paramDeque params) {
-  if (params.size() != 1) {
-    throw CommandHandlerError(
-        "Incorrect number of parameters for command register. Expected: "
-        "register [name]");
-  }
-
   std::string username = params[0];
 
   try {
@@ -91,12 +78,6 @@ std::string CommandHandler::registerCommand(paramDeque params) {
 }
 
 std::string CommandHandler::clientlistCommand(paramDeque params) {
-  if (params.size() != 0) {
-    throw CommandHandlerError(
-        "Incorrect number of parameters for command clientlist. Expected: "
-        "clientlist");
-  }
-
   std::string resultString = "List of available users:\n";
 
   SQLiteQuery query = SQLiteQuery(SELECT_USERS, &dbConnector);
@@ -109,12 +90,6 @@ std::string CommandHandler::clientlistCommand(paramDeque params) {
 }
 
 std::string CommandHandler::loginCommand(paramDeque params) {
-  if (params.size() != 1) {
-    throw CommandHandlerError(
-        "Incorrect number of parameters for command login. Expected: login "
-        "[name]");
-  }
-
   std::string username = params[0];
 
   int userId;
@@ -153,11 +128,6 @@ std::string CommandHandler::loginCommand(paramDeque params) {
 }
 
 std::string CommandHandler::logoffCommand(paramDeque params) {
-  if (params.size() != 0) {
-    throw CommandHandlerError(
-        "Incorrect number of parameters for command logoff. Expected: logoff");
-  }
-
   try{
     SQLiteQuery("BEGIN", &dbConnector).runOperation();
     // ON DELETE CASCADE didn't work as expected
@@ -180,11 +150,6 @@ std::string CommandHandler::logoffCommand(paramDeque params) {
 }
 
 std::string CommandHandler::listCommand(paramDeque params) {
-  if (params.size() != 0) {
-    throw CommandHandlerError(
-        "Incorrect number of parameters for command list. Expected: list");
-  }
-
   // TODO add format string for better printing
   std::string resultString = "List of available machines:\n";
 
@@ -209,22 +174,9 @@ std::string CommandHandler::listCommand(paramDeque params) {
 }
 
 std::string CommandHandler::grantCommand(paramDeque params) {
-  if (params.size() != 1) {
-    throw CommandHandlerError(
-        "Incorrect number of parameters for command grant. Expected: grant "
-        "[name]");
-  }
-
   std::string username = params[0];
 
-  try{
-    SQLiteQuery selectUserId = SQLiteQuery(SELECT_USER_ID, &dbConnector);
-    selectUserId.bindText(1, username);
-    auto result = selectUserId.runQuery();
-    if (result.empty()){
-      throw CommandHandlerError("User with username "+username+" doesn't exist");
-    }
-    
+  try{  
     SQLiteQuery insertAllowedShutdown = SQLiteQuery(INSERT_ALLOWED_SHUTDOWN, &dbConnector);
     insertAllowedShutdown.bindText(1, username);
     insertAllowedShutdown.bindText(2, connection.getIPAddress());
@@ -237,23 +189,9 @@ std::string CommandHandler::grantCommand(paramDeque params) {
 }
 
 std::string CommandHandler::revokeCommand(paramDeque params) {
-  if (params.size() != 1) {
-    throw CommandHandlerError(
-        "Incorrect number of parameters for command revoke. Expected: revoke "
-        "[name]");
-  }
-
   std::string username = params[0];
 
   try{
-    SQLiteQuery selectUserId = SQLiteQuery(SELECT_ALLOWED_SHUTDOWN, &dbConnector);
-    selectUserId.bindText(1, username);
-    selectUserId.bindText(2, connection.getIPAddress());
-    auto result = selectUserId.runQuery();
-    if (result.empty()){
-      throw CommandHandlerError("User with username "+username+" doesn't have permissions for current machine");
-    }
-
     SQLiteQuery deleteAllowedShutdown = SQLiteQuery(DELETE_ALLOWED_SHUTDOWN, &dbConnector);
     deleteAllowedShutdown.bindText(1, username);
     deleteAllowedShutdown.bindText(2, connection.getIPAddress());
@@ -266,11 +204,6 @@ std::string CommandHandler::revokeCommand(paramDeque params) {
 }
 
 std::string CommandHandler::shutdownCommand(paramDeque params) {
-  if (params.size() != 1) {
-    throw CommandHandlerError(
-        "Incorrect number of parameters for command shutdown. Expected: "
-        "shutdown [IP]");
-  }
 
   return "SHUTDOWN";
 }

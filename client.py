@@ -2,9 +2,7 @@ import select
 import socket
 import sys
 import threading
-from threading import Lock
 import sys
-import subprocess
 from time import sleep
 
 def readInput(sock):

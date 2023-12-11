@@ -6,6 +6,8 @@
 #include "../sqliteconnector/sqliteconnector.hpp"
 #include "../sqlitequery/sqlitequery.hpp"
 #include "../misc/stringTrim.hpp"
+#include "../misc/types.hpp"
+#include "../ipaddressvalidator/ipaddressvalidator.hpp"
 
 AuthVerifierError::AuthVerifierError(const std::string message){
     this->message = message;
@@ -26,7 +28,7 @@ bool AuthVerifier::checkIfLoggedIn(){
     return true;
 }
 
-void AuthVerifier::verifyCommand(std::string command, std::deque<std::string> params) {
+void AuthVerifier::verifyCommand(std::string command, paramDeque params) {
     if(isStringInVector(commandsLoggedIn, command) && !checkIfLoggedIn()){
         throw AuthVerifierError("This command can be used only when logged in");
     }
@@ -34,4 +36,12 @@ void AuthVerifier::verifyCommand(std::string command, std::deque<std::string> pa
     if(isStringInVector(commandsNotLoggedIn, command) && checkIfLoggedIn()){
         throw AuthVerifierError("This command can be used only when logged off");
     }
+
+    if(command == "shutdown"){
+        verifyShutdown(params.at(0));
+    }
+}
+
+void AuthVerifier::verifyShutdown(std::string IP){
+    
 }
