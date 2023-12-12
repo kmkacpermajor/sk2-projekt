@@ -1,4 +1,7 @@
+#include "commandhandler.hpp"
+
 #include <unistd.h>
+
 #include <deque>
 #include <map>
 #include <string>
@@ -7,15 +10,12 @@
 #include "../sqliteconnector/sqliteconnector.hpp"
 #include "../sqlitequery/sqlitequery.hpp"
 #include "../tcpconnection/tcpconnection.hpp"
-#include "commandhandler.hpp"
 
 CommandHandlerError::CommandHandlerError(const std::string message) {
   this->message = message;
 }
 
-std::string CommandHandlerError::what() {
-  return this->message;
-}
+std::string CommandHandlerError::what() { return this->message; }
 
 CommandHandler::CommandHandler(TCPConnection& conn, SQLiteConnector& dbC)
     : dbConnector(dbC), connection(conn) {
@@ -60,11 +60,12 @@ std::string CommandHandler::registerCommand(paramDeque params) {
   std::string username = params[0];
 
   try {
-    SQLiteQuery checkForUser = SQLiteQuery(SELECT_USER_ID, &dbConnector);
+    SQLiteQuery checkForUser = SQLiteQuery(SELECT_USER, &dbConnector);
     checkForUser.bindText(1, username);
     auto result = checkForUser.runQuery();
-    if (!result.empty()){
-      throw CommandHandlerError("User with username "+username+" already exists");
+    if (!result.empty()) {
+      throw CommandHandlerError("User with username " + username +
+                                " already exists");
     }
 
     SQLiteQuery insertUser = SQLiteQuery(INSERT_USER, &dbConnector);
@@ -94,12 +95,13 @@ std::string CommandHandler::loginCommand(paramDeque params) {
 
   int userId;
 
-  try{
-    SQLiteQuery selectUserId = SQLiteQuery(SELECT_USER_ID, &dbConnector);
+  try {
+    SQLiteQuery selectUserId = SQLiteQuery(SELECT_USER, &dbConnector);
     selectUserId.bindText(1, username);
     auto result = selectUserId.runQuery();
-    if (result.empty()){
-      throw CommandHandlerError("User with username "+username+" doesn't exist");
+    if (result.empty()) {
+      throw CommandHandlerError("User with username " + username +
+                                " doesn't exist");
     }
 
     userId = std::stoi(result.at(0).at("rowid"));
@@ -111,7 +113,8 @@ std::string CommandHandler::loginCommand(paramDeque params) {
     insertMachine.bindInt(3, userId);
     insertMachine.runOperation();
 
-    SQLiteQuery insertAllowedShutdown = SQLiteQuery(INSERT_ALLOWED_SHUTDOWN, &dbConnector);
+    SQLiteQuery insertAllowedShutdown =
+        SQLiteQuery(INSERT_ALLOWED_SHUTDOWN, &dbConnector);
     insertAllowedShutdown.bindText(1, username);
     insertAllowedShutdown.bindText(2, connection.getIPAddress());
     insertAllowedShutdown.runOperation();
@@ -128,10 +131,11 @@ std::string CommandHandler::loginCommand(paramDeque params) {
 }
 
 std::string CommandHandler::logoffCommand(paramDeque params) {
-  try{
+  try {
     SQLiteQuery("BEGIN", &dbConnector).runOperation();
     // ON DELETE CASCADE didn't work as expected
-    SQLiteQuery deleteAllowedShutdowns = SQLiteQuery(DELETE_MACHINES_ALLOWED_SHUTDOWNS, &dbConnector);
+    SQLiteQuery deleteAllowedShutdowns =
+        SQLiteQuery(DELETE_MACHINES_ALLOWED_SHUTDOWNS, &dbConnector);
     deleteAllowedShutdowns.bindText(1, connection.getIPAddress());
     deleteAllowedShutdowns.runOperation();
 
@@ -145,7 +149,7 @@ std::string CommandHandler::logoffCommand(paramDeque params) {
   }
 
   connection.logout();
-  
+
   return "Successfully logged off";
 }
 
@@ -157,15 +161,15 @@ std::string CommandHandler::listCommand(paramDeque params) {
   auto rows = query.runQuery();
   for (auto row : rows) {
     resultString += row.at("ip_address");
-    if (row.at("state") == "1"){
+    if (row.at("state") == "1") {
       resultString += " ON ";
-    }else{
+    } else {
       resultString += " OFF";
     }
 
-    if (row.at("permission") == "1"){
+    if (row.at("permission") == "1") {
       resultString += " ALLOWED\n";
-    }else{
+    } else {
       resultString += " NOT ALLOWED\n";
     }
   }
@@ -176,8 +180,9 @@ std::string CommandHandler::listCommand(paramDeque params) {
 std::string CommandHandler::grantCommand(paramDeque params) {
   std::string username = params[0];
 
-  try{  
-    SQLiteQuery insertAllowedShutdown = SQLiteQuery(INSERT_ALLOWED_SHUTDOWN, &dbConnector);
+  try {
+    SQLiteQuery insertAllowedShutdown =
+        SQLiteQuery(INSERT_ALLOWED_SHUTDOWN, &dbConnector);
     insertAllowedShutdown.bindText(1, username);
     insertAllowedShutdown.bindText(2, connection.getIPAddress());
     insertAllowedShutdown.runOperation();
@@ -185,14 +190,15 @@ std::string CommandHandler::grantCommand(paramDeque params) {
     throw CommandHandlerError("Error: " + e.what());
   }
 
-  return "Granted "+username+" permission for current machine";
+  return "Granted " + username + " permission for current machine";
 }
 
 std::string CommandHandler::revokeCommand(paramDeque params) {
   std::string username = params[0];
 
-  try{
-    SQLiteQuery deleteAllowedShutdown = SQLiteQuery(DELETE_ALLOWED_SHUTDOWN, &dbConnector);
+  try {
+    SQLiteQuery deleteAllowedShutdown =
+        SQLiteQuery(DELETE_ALLOWED_SHUTDOWN, &dbConnector);
     deleteAllowedShutdown.bindText(1, username);
     deleteAllowedShutdown.bindText(2, connection.getIPAddress());
     deleteAllowedShutdown.runOperation();
@@ -200,12 +206,34 @@ std::string CommandHandler::revokeCommand(paramDeque params) {
     throw CommandHandlerError("Error: " + e.what());
   }
 
-  return "Revoked permission for current machine form "+username;
+  return "Revoked permission for current machine form " + username;
 }
 
 std::string CommandHandler::shutdownCommand(paramDeque params) {
+  std::string IP = params.at(0);
+  int targetFD;
+  try {
+    SQLiteQuery selectMachine = SQLiteQuery(SELECT_MACHINE, &dbConnector);
+    selectMachine.bindText(1, IP);
+    auto machineResult = selectMachine.runQuery();
+    if (machineResult.empty()) {
+      throw AuthVerifierError("Machine with IP " + IP + " doesn't exist");
+    }
 
-  return "SHUTDOWN";
+    targetFD = std::stoi(machineResult.at(0).at("file_descriptor"));
+  } catch (SQLiteQueryError& e) {
+    throw CommandHandlerError("Error: " + e.what());
+  }
+
+  try {
+    TCPConnection targetConnection(connection.getMutex());
+    targetConnection.setClientFD(targetFD);
+    targetConnection.sendMessage("close");
+  } catch (ConnectionError& e) {
+    throw CommandHandlerError("Error: " + e.what());
+  }
+
+  return "Machine " + IP + " successfully shutdown";
 }
 
 std::string CommandHandler::exitCommand(paramDeque params) {
@@ -214,7 +242,7 @@ std::string CommandHandler::exitCommand(paramDeque params) {
         "Incorrect number of parameters for command exit. Expected: exit");
   }
 
-  return ""; // so we don't send anything
+  return "";  // so we don't send anything
 }
 
 std::string CommandHandler::helpCommand(paramDeque params) {
@@ -241,7 +269,8 @@ std::string CommandHandler::helpCommand(paramDeque params) {
 }
 
 CommandHandler::~CommandHandler() {
-  SQLiteQuery deleteAllowedShutdown = SQLiteQuery(FINALIZE_MACHINE, &dbConnector);
+  SQLiteQuery deleteAllowedShutdown =
+      SQLiteQuery(FINALIZE_MACHINE, &dbConnector);
   deleteAllowedShutdown.bindText(1, connection.getIPAddress());
   deleteAllowedShutdown.runOperation();
 }

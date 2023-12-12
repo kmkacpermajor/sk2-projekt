@@ -3,6 +3,7 @@
 #include <deque>
 #include <string>
 
+#include "../misc/queries.hpp"
 #include "../misc/stringTrim.hpp"
 #include "../misc/types.hpp"
 #include "../sqliteconnector/sqliteconnector.hpp"
@@ -39,4 +40,27 @@ void AuthVerifier::verifyCommand(std::string command, paramDeque params) {
   }
 }
 
-void AuthVerifier::verifyShutdown(std::string IP) {}
+void AuthVerifier::verifyShutdown(std::string IP) {
+  try {
+    SQLiteQuery selectMachine = SQLiteQuery(SELECT_MACHINE, &dbConnector);
+    selectMachine.bindText(1, IP);
+    auto machineResult = selectMachine.runQuery();
+    if (machineResult.empty()) {
+      throw AuthVerifierError("Machine with IP " + IP + " doesn't exist");
+    }
+
+    SQLiteQuery selectAllowedShutdown =
+        SQLiteQuery(SELECT_ALLOWED_SHUTDOWN, &dbConnector);
+    selectAllowedShutdown.bindText(1, connection.getCurrentUser());
+    selectAllowedShutdown.bindText(2, IP);
+    auto allowedShutdownResult = selectAllowedShutdown.runQuery();
+
+    if (allowedShutdownResult.empty()) {
+      throw AuthVerifierError(
+          "Current user doesn't have permission to shutdown machine " + IP);
+    }
+
+  } catch (SQLiteQueryError &e) {
+    throw AuthVerifierError("Error: " + e.what());
+  }
+}

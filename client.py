@@ -5,6 +5,9 @@ import threading
 import sys
 from time import sleep
 
+# po zatrzymaniu połączenia spróbować ponowić połączenie
+# do obsłużenia przypadek połączenia z tego samego IP (np. zamknięcie poprzedniego deskryptora, a w kliencie obsłużenie exception)
+
 def readInput(sock):
     while True:
         sys.stdout.flush()

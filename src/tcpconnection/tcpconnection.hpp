@@ -28,6 +28,7 @@ class TCPConnection {
   std::string getIPAddress();
   std::string getMessage();
   std::string getCurrentUser();
+  std::mutex& getMutex();
   int getCurrentUserID();
   void setServerFD(int fd);
   void setClientFD(int fd);

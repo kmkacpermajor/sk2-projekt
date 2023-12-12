@@ -49,6 +49,8 @@ int TCPConnection::getCurrentUserID() { return currentUserID; }
 
 int TCPConnection::getClientFD() { return clientFD; }
 
+std::mutex& TCPConnection::getMutex() { return mutex; }
+
 void TCPConnection::setCurrentUser(std::string username, int id) {
   currentUser = username;
   currentUserID = id;
@@ -76,9 +78,15 @@ void TCPConnection::sendMessage(std::string message) {
   std::lock_guard<std::mutex> lock(mutex);
   int status = send(clientFD, message.c_str(), message.length(), MSG_NOSIGNAL);
 
-  if (status == EPIPE){
+  if (status == EPIPE) {
     throw ConnectionEndedException();
   }
 }
 
-TCPConnection::~TCPConnection() { close(clientFD); }
+TCPConnection::~TCPConnection() {
+  // try{
+  close(clientFD);
+  // }catch (){
+
+  // }
+}
