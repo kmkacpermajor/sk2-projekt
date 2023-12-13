@@ -63,6 +63,8 @@
 
 #define SET_STATUS "UPDATE machines SET state = ? WHERE ip_address = ?"
 
+#define SET_FD "UPDATE machines SET file_descriptor = ? WHERE ip_address = ?"
+
 #define FINALIZE_MACHINE \
   "UPDATE machines SET file_descriptor = -1, state = 0 WHERE ip_address = ?"
 

@@ -1,5 +1,6 @@
 import select
 import socket
+import subprocess
 import sys
 import threading
 import sys
@@ -49,8 +50,9 @@ with socket.socket() as sock:
 
         if len(msg) > 0:
             if msg == "close":
-                # subprocess.run(["sleep", "1"])
-                print("shutting down")
+                subprocess.run(["shutdown", "5"])
+                print("\nClient will be shutdown in 5 seconds...")
+                thread.join()
                 exit()
             else:
                 print(msg, end="\n> ")
