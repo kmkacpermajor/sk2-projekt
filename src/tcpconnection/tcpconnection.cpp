@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <iostream>
 #include <mutex>
 #include <vector>
 
@@ -76,17 +77,19 @@ std::string TCPConnection::getMessage() {
 
 void TCPConnection::sendMessage(std::string message) {
   std::lock_guard<std::mutex> lock(mutex);
-  int status = send(clientFD, message.c_str(), message.length(), MSG_NOSIGNAL);
+  int status;
+  message = trim(message);
 
-  if (status == EPIPE) {
+  try {
+    status = send(clientFD, message.c_str(), message.length(), MSG_NOSIGNAL);
+  } catch (ConnectionError& e) {
+    std::cout << "Error occurred when sending response: " << e.what()
+              << std::endl;
+  }
+
+  if (status == EPIPE || status == EBADF) {
     throw ConnectionEndedException();
   }
 }
 
-TCPConnection::~TCPConnection() {
-  // try{
-  close(clientFD);
-  // }catch (){
-
-  // }
-}
+TCPConnection::~TCPConnection() { close(clientFD); }

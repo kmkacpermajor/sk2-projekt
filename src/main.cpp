@@ -14,6 +14,7 @@
 #include "misc/queries.hpp"
 #include "misc/stringTrim.hpp"
 #include "misc/types.hpp"
+#include "networking/networking.hpp"
 #include "sqliteconnector/sqliteconnector.hpp"
 #include "sqlitequery/sqlitequery.hpp"
 #include "tcpconnection/tcpconnection.hpp"
@@ -26,7 +27,15 @@ void handleNewServerConnection(int serverFD) {
   auto commandParser = CommandParser();
   auto commandHandler = CommandHandler(connection, dbConnector);
 
+  // sprawdzenie maszyny czy ma fd, jak tak to zamykamy go (co z wątkiem)
+  // refactor góry i dołu
+
   try {
+    SQLiteQuery(SET_FD, &dbConnector)
+        .bindInt(1, connection.getClientFD())
+        ->bindText(2, connection.getIPAddress())
+        ->runOperation();
+
     try {
       auto ownerRow = SQLiteQuery(SELECT_MACHINE_OWNER, &dbConnector)
                           .bindText(1, connection.getIPAddress())
@@ -41,20 +50,15 @@ void handleNewServerConnection(int serverFD) {
     } catch (std::out_of_range &e) {
       std::cout << "No user for current machine. Not relogging" << std::endl;
     }
-
-    SQLiteQuery(SET_FD, &dbConnector)
-        .bindInt(1, connection.getClientFD())
-        ->bindText(2, connection.getIPAddress())
-        ->runOperation();
   } catch (SQLiteQueryError &e) {
     std::cout << "Error occurred when trying to relogin: " << e.what()
               << std::endl;
   }
 
   if (connection.getCurrentUser() == "") {
-    connection.sendMessage("Połączono z serwerem");
+    connection.sendMessage("Connected to server");
   } else {
-    connection.sendMessage("Połączono z serwerem jako użytkownik " +
+    connection.sendMessage("Connected to server logged in as " +
                            connection.getCurrentUser());
   }
 
@@ -125,14 +129,9 @@ void *handleNewThread(void *arg) {
     std::cout << "Failed to create database: " << e.what() << std::endl;
     exit(EXIT_FAILURE);
   }
-
-  return 0;
 }
 
 int main() {
-  int serverSocket;
-  struct sockaddr_in serverAddress;
-
   try {
     SQLiteConnector initSQLiteConnector = SQLiteConnector(DB_NAME);
     initSQLiteConnector.initDatabase();
@@ -142,21 +141,19 @@ int main() {
     exit(EXIT_FAILURE);
   }
 
-  serverSocket = socket(PF_INET, SOCK_STREAM, 0);
-  serverAddress.sin_family = AF_INET;
-  serverAddress.sin_port = htons(PORT);
-  serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+  int serverSocket = socket(PF_INET, SOCK_STREAM, 0);
+  struct sockaddr_in serverAddress =
+      prepareSockAddrIn(AF_INET, INADDR_ANY, PORT);
 
-  memset(serverAddress.sin_zero, '\0', sizeof(serverAddress.sin_zero));
   bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
 
-  if (listen(serverSocket, 50) == 0)
-    printf("Listening on port %d\n", PORT);
-  else {
-    perror("Cannot listen");
+  if (listen(serverSocket, QUEUE_SIZE) != 0) {
+    throw ListenError(PORT);
   }
 
-  for (int i = 0; i < THREAD_COUNT; i++) {
+  std::cout << "Listening on port " << PORT << std::endl;
+
+  for (int i = 0; i < EXTRA_THREADS_COUNT; i++) {
     std::thread thread(handleNewThread, &serverSocket);
     thread.detach();
   }

@@ -1,8 +1,8 @@
 #pragma once
-#include <string>
 #include <deque>
 #include <functional>
 #include <map>
+#include <string>
 
 using paramDeque = std::deque<std::string>;
 using commandStringFunction = std::function<std::string(paramDeque)>;

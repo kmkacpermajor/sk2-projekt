@@ -154,7 +154,6 @@ std::string CommandHandler::logoffCommand(paramDeque params) {
 }
 
 std::string CommandHandler::listCommand(paramDeque params) {
-  // TODO add format string for better printing
   std::string resultString = "List of available machines:\n";
 
   SQLiteQuery query = SQLiteQuery(SELECT_ALLOWED_SHUTDOWNS, &dbConnector);

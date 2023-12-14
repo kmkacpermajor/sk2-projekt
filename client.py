@@ -6,9 +6,6 @@ import threading
 import sys
 from time import sleep
 
-# po zatrzymaniu połączenia spróbować ponowić połączenie
-# do obsłużenia przypadek połączenia z tego samego IP (np. zamknięcie poprzedniego deskryptora, a w kliencie obsłużenie exception)
-
 def readInput(sock):
     while True:
         sys.stdout.flush()
@@ -39,7 +36,7 @@ if len(sys.argv) != 3:
 
 with socket.socket() as sock:
     sock.connect((sys.argv[1], int(sys.argv[2])))
-    thread = threading.Thread(target=readInput, args=(sock,))
+    thread = threading.Thread(target=readInput, args=(sock,), daemon=True)
     thread.start()
     while True:
         if not thread.is_alive():
@@ -50,9 +47,12 @@ with socket.socket() as sock:
 
         if len(msg) > 0:
             if msg == "close":
-                subprocess.run(["shutdown", "5"])
                 print("\nClient will be shutdown in 5 seconds...")
-                thread.join()
-                exit()
+                sleep(5)
+                if sys.platform == 'win32':
+                    subprocess.Popen(r"C:\Windows\System32\shutdown.exe /p /f", creationflags=subprocess.CREATE_NO_WINDOW)
+                else:
+                    subprocess.run(["shutdown", "0"], stdout = subprocess.DEVNULL)
+                sys.exit(0)
             else:
                 print(msg, end="\n> ")

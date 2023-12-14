@@ -19,7 +19,7 @@ inline std::string &trim(std::string &s, const char *t = " \t\n\r\f\v") {
   return ltrim(rtrim(s, t), t);
 }
 
-inline bool isStringInVector(std::vector<std::string> v, std::string s){
+inline bool isStringInVector(std::vector<std::string> v, std::string s) {
   if (std::find(v.begin(), v.end(), s) != v.end()) return true;
   return false;
 }
