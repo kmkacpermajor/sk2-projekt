@@ -20,22 +20,22 @@ void initDatabase() {
   }
 }
 
-void *handleNewThread(void *arg) {
+void handleNewThread(void *arg) {
   int serverFD = *(int *)arg;
 
   try {
     while (1) {
       AgentConnection agent(serverFD, m);
       while (1) {
-        std::string message = agent.getConnection().getMessage();
-
-        std::string response = agent.prepareResponse(message);
-
-        if (response.length() == 0) {
-          break;
-        }
-
         try {
+          std::string message = agent.getConnection().getMessage();
+
+          std::string response = agent.prepareResponse(message);
+
+          if (response.length() == 0) {
+            break;
+          }
+
           agent.getConnection().sendMessage(response);
         } catch (ConnectionEndedException &e) {
           break;
@@ -44,9 +44,8 @@ void *handleNewThread(void *arg) {
     }
   } catch (ConnectionError &e) {
     std::cout << "Error occurred when connecting: " << e.what() << std::endl;
-    exit(EXIT_FAILURE);
   } catch (DatabaseError &e) {
-    std::cout << "Failed to create database: " << e.what() << std::endl;
+    std::cout << "Failed to connect to database: " << e.what() << std::endl;
     exit(EXIT_FAILURE);
   }
 }

@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "../misc/const.hpp"
-#include "../misc/stringTrim.hpp"
+#include "../misc/stringopers.hpp"
 
 ConnectionEndedException::ConnectionEndedException() {}
 
@@ -64,7 +64,7 @@ std::string TCPConnection::getMessage() {
   do {
     bytesReceived = recv(this->clientFD, &buffer[0], buffer.size(), 0);
     if (bytesReceived == -1) {
-      throw ConnectionError(errno);
+      throw ConnectionEndedException();
     } else {
       message.append(buffer.cbegin(), buffer.cend());
     }

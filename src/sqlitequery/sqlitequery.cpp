@@ -50,19 +50,19 @@ int SQLiteQuery::runOperation() {
   return getLastId();  // returns last id (id updates after insert, not update)
 }
 
-SQLiteQuery *SQLiteQuery::bindText(int index, std::string text) {
+SQLiteQuery &SQLiteQuery::bindText(int index, std::string text) {
   int sqliteStatus = sqlite3_bind_text(this->statement, index, text.c_str(),
                                        text.length(), SQLITE_TRANSIENT);
   checkForError(sqliteStatus);
 
-  return this;
+  return *this;
 }
 
-SQLiteQuery *SQLiteQuery::bindInt(int index, int text) {
+SQLiteQuery &SQLiteQuery::bindInt(int index, int text) {
   int sqliteStatus = sqlite3_bind_int(this->statement, index, text);
   checkForError(sqliteStatus);
 
-  return this;
+  return *this;
 }
 
 std::vector<std::map<std::string, std::string>> SQLiteQuery::runQuery() {

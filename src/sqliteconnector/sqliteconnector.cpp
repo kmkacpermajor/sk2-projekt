@@ -36,6 +36,7 @@ void SQLiteConnector::initDatabase() {
       SQLiteQuery(CREATE_USERS, this).runOperation();
       SQLiteQuery(CREATE_MACHINES, this).runOperation();
       SQLiteQuery(CREATE_ALLOWED_SHUTDOWNS, this).runOperation();
+      SQLiteQuery(RESET_MACHINES, this).runOperation();
       SQLiteQuery("COMMIT", this).runOperation();
     }
   } catch (SQLiteQueryError &e) {

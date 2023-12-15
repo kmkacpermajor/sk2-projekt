@@ -24,8 +24,8 @@ class SQLiteQuery {
   int runOperation();
   int getLastId();
   void checkForError(int sqliteStatus);
-  SQLiteQuery *bindText(int index, std::string value);
-  SQLiteQuery *bindInt(int index, int value);
+  SQLiteQuery &bindText(int index, std::string value);
+  SQLiteQuery &bindInt(int index, int value);
   std::vector<std::map<std::string, std::string>> runQuery();
   ~SQLiteQuery();
 };

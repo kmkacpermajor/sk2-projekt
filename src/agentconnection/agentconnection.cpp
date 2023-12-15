@@ -10,7 +10,7 @@
 #include "../commandparser/commandparser.hpp"
 #include "../misc/const.hpp"
 #include "../misc/queries.hpp"
-#include "../misc/stringTrim.hpp"
+#include "../misc/stringopers.hpp"
 #include "../misc/types.hpp"
 #include "../sqliteconnector/sqliteconnector.hpp"
 #include "../sqlitequery/sqlitequery.hpp"
@@ -34,18 +34,18 @@ void AgentConnection::reloginUser() {
   try {
     SQLiteQuery(SET_FD, &dbConnector)
         .bindInt(1, connection.getClientFD())
-        ->bindText(2, connection.getIPAddress())
-        ->runOperation();
+        .bindText(2, connection.getIPAddress())
+        .runOperation();
 
     try {
       auto ownerRow = SQLiteQuery(SELECT_MACHINE_OWNER, &dbConnector)
                           .bindText(1, connection.getIPAddress())
-                          ->runQuery()
+                          .runQuery()
                           .at(0);
       SQLiteQuery(SET_STATUS, &dbConnector)
           .bindInt(1, 1)
-          ->bindText(2, connection.getIPAddress())
-          ->runOperation();
+          .bindText(2, connection.getIPAddress())
+          .runOperation();
       connection.setCurrentUser(ownerRow.at("username"),
                                 std::stoi(ownerRow.at("id")));
     } catch (std::out_of_range &e) {
@@ -57,7 +57,7 @@ void AgentConnection::reloginUser() {
   }
 }
 
-TCPConnection AgentConnection::getConnection() { return connection; }
+TCPConnection &AgentConnection::getConnection() { return connection; }
 
 std::string AgentConnection::prepareResponse(std::string message) {
   try {

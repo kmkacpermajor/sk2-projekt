@@ -3,7 +3,10 @@
 #include <unistd.h>
 
 #include <deque>
+#include <iomanip>
+#include <iostream>
 #include <map>
+#include <sstream>
 #include <string>
 
 #include "../misc/queries.hpp"
@@ -159,18 +162,27 @@ std::string CommandHandler::listCommand(paramDeque params) {
   SQLiteQuery query = SQLiteQuery(SELECT_ALLOWED_SHUTDOWNS, &dbConnector);
   auto rows = query.runQuery();
   for (auto row : rows) {
-    resultString += row.at("ip_address");
+    std::ostringstream formatted;
+    std::string IP = row.at("ip_address");
+    std::string state;
+    std::string permission;
+
     if (row.at("state") == "1") {
-      resultString += " ON ";
+      state = "ON";
     } else {
-      resultString += " OFF";
+      state = "OFF";
     }
 
     if (row.at("permission") == "1") {
-      resultString += " ALLOWED\n";
+      permission = "ALLOWED";
     } else {
-      resultString += " NOT ALLOWED\n";
+      permission = "NOT ALLOWED";
     }
+
+    formatted << std::setw(15) << IP << " " << std::setw(4) << state << " "
+              << std::setw(11) << std::right << permission << std::endl;
+
+    resultString += formatted.str();
   }
 
   return resultString;

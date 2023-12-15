@@ -16,7 +16,7 @@ class AgentConnection {
  public:
   AgentConnection(int serverFD, std::mutex& m);
   void reloginUser();
-  TCPConnection getConnection();
+  TCPConnection& getConnection();
   std::string prepareResponse(std::string message);
   ~AgentConnection();
 };

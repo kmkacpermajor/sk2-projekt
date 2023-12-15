@@ -4,7 +4,7 @@
 #include <string>
 
 #include "../misc/queries.hpp"
-#include "../misc/stringTrim.hpp"
+#include "../misc/stringopers.hpp"
 #include "../misc/types.hpp"
 #include "../sqliteconnector/sqliteconnector.hpp"
 #include "../sqlitequery/sqlitequery.hpp"
