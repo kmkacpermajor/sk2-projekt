@@ -92,7 +92,7 @@ void CommandVerifier::validateIpAddress(std::string IP){
 
 void CommandVerifier::validateUserName(std::string username){
   try {
-    SQLiteQuery checkForUser = SQLiteQuery(SELECT_USER_ID, &dbConnector);
+    SQLiteQuery checkForUser = SQLiteQuery(SELECT_USER, &dbConnector);
     checkForUser.bindText(1, username);
     auto result = checkForUser.runQuery();
     if (!result.empty()){

@@ -6,18 +6,18 @@
   "LIKE 'sqlite_%'"
 
 #define CREATE_USERS \
-  "CREATE TABLE IF NOT EXISTS users (username TEXT UNIQUE NOT NULL)"
+  "CREATE TABLE IF NOT EXISTS users (rowid INTEGER PRIMARY KEY ASC, username TEXT UNIQUE NOT NULL)"
 
 #define CREATE_MACHINES                                                        \
-  "CREATE TABLE IF NOT EXISTS machines (ip_address TEXT UNIQUE NOT NULL, "     \
-  "file_descriptor INTEGER NOT NULL, user_id INTEGER NOT NULL, state INTEGER " \
-  "NOT NULL)"
+  "CREATE TABLE IF NOT EXISTS machines (rowid INTEGER PRIMARY KEY ASC, ip_address TEXT NOT NULL, "     \
+  "user_id NOT NULL, file_descriptor NOT NULL, state INTEGER " \
+  "NOT NULL, UNIQUE(ip_address, user_id))"
 
 #define CREATE_ALLOWED_SHUTDOWNS                                             \
-  "CREATE TABLE IF NOT EXISTS allowed_shutdowns (user_id INTEGER NOT NULL, " \
+  "CREATE TABLE IF NOT EXISTS allowed_shutdowns (rowid INTEGER PRIMARY KEY ASC, user_id INTEGER NOT NULL, " \
   "machine_id INTEGER NOT NULL, FOREIGN KEY(user_id) REFERENCES "            \
   "users(rowid), FOREIGN KEY(machine_id) REFERENCES machines(rowid) ON "     \
-  "DELETE CASCADE)"
+  "DELETE CASCADE, UNIQUE(user_id, machine_id))"
 
 #define SELECT_USERS "SELECT * FROM users"
 
