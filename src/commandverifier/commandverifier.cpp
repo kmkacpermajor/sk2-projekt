@@ -56,7 +56,7 @@ void CommandVerifier::addCommandFunction(std::string command,
   commandFunctions[command] = func;
 }
 
-void CommandVerifier::handleCommand(std::string command,
+void CommandVerifier::verifyCommand(std::string command,
                                           paramDeque params) {
   auto it = commandFunctions.find(command);
   if (it != commandFunctions.end()) {
@@ -190,5 +190,3 @@ void CommandVerifier::helpCommand(paramDeque params) {
   }
 
 }
-
-CommandVerifier::~CommandVerifier() {}

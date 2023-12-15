@@ -21,9 +21,9 @@ class AuthVerifier
     std::vector<std::string> commandsNotLoggedIn {"register", "login"};
 
     bool checkIfLoggedIn();
+    void authShutdown(std::string params);
 
 public:
     AuthVerifier(TCPConnection &conn, SQLiteConnector &dbC);
-    void verifyCommand(std::string command, std::deque<std::string> params);
-    void verifyShutdown(std::string params);
+    void authCommand(std::string command, std::deque<std::string> params);
 };

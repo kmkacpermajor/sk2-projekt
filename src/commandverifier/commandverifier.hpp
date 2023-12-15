@@ -43,10 +43,9 @@ class CommandVerifier
     void validateUserName(std::string username);
 
     bool correctArgumentCountCheck(int argc, std::string command, std::string expected);
+    void addCommandFunction(std::string command, const commandVoidFunction &func);
 
 public:
     CommandVerifier(SQLiteConnector &dbC);
-    void addCommandFunction(std::string command, const commandVoidFunction &func);
-    void handleCommand(std::string command, paramDeque params);
-    ~CommandVerifier();
+    void verifyCommand(std::string command, paramDeque params);
 };

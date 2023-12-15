@@ -19,7 +19,9 @@
 AgentConnection::AgentConnection(int serverFD, std::mutex &m)
     : connection(serverFD, m),
       dbConnector(DB_NAME),
-      commandHandler(connection, dbConnector) {
+      commandHandler(connection, dbConnector),
+      authVerifier(connection, dbConnector),
+      commandVerifier(dbConnector) {
   reloginUser();
 
   if (connection.getCurrentUser() == "") {
@@ -69,7 +71,9 @@ std::string AgentConnection::prepareResponse(std::string message) {
       std::string command = params.front();
       params.pop_front();
 
-      AuthVerifier(connection, dbConnector).verifyCommand(command, params);
+      commandVerifier.verifyCommand(command, params);
+
+      authVerifier.authCommand(command, params);
 
       return commandHandler.handleCommand(command, params);
     }
@@ -89,4 +93,9 @@ std::string AgentConnection::prepareResponse(std::string message) {
   }
 }
 
-AgentConnection::~AgentConnection() {}
+AgentConnection::~AgentConnection() {
+  SQLiteQuery finalizeMachine =
+      SQLiteQuery(FINALIZE_MACHINE, &dbConnector);
+  finalizeMachine.bindText(1, connection.getIPAddress());
+  finalizeMachine.runOperation();
+}

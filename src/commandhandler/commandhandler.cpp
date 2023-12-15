@@ -278,10 +278,3 @@ std::string CommandHandler::helpCommand(paramDeque params) {
 
   return helpMsg;
 }
-
-CommandHandler::~CommandHandler() {
-  SQLiteQuery deleteAllowedShutdown =
-      SQLiteQuery(FINALIZE_MACHINE, &dbConnector);
-  deleteAllowedShutdown.bindText(1, connection.getIPAddress());
-  deleteAllowedShutdown.runOperation();
-}

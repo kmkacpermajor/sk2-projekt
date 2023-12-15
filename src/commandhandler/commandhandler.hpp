@@ -34,11 +34,10 @@ class CommandHandler {
 
   bool correctArgumentCountCheck(int argc, std::string command,
                                  std::string expected);
-
- public:
-  CommandHandler(TCPConnection &conn, SQLiteConnector &dbC);
   void addCommandFunction(std::string command,
                           const commandStringFunction &func);
+  
+ public:
+  CommandHandler(TCPConnection &conn, SQLiteConnector &dbC);
   std::string handleCommand(std::string command, paramDeque params);
-  ~CommandHandler();
 };

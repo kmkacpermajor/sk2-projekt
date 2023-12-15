@@ -18,10 +18,11 @@ class SQLiteConnector {
   std::string dbName;
   sqlite3 *db;
 
+  int howManyTables();
+
  public:
   SQLiteConnector(std::string dbName);
   void initDatabase();
-  int howManyTables();
   sqlite3 *getDatabase();
   ~SQLiteConnector();
 };

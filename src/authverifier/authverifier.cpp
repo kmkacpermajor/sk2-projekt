@@ -26,7 +26,7 @@ bool AuthVerifier::checkIfLoggedIn() {
   return true;
 }
 
-void AuthVerifier::verifyCommand(std::string command, paramDeque params) {
+void AuthVerifier::authCommand(std::string command, paramDeque params) {
   if (isStringInVector(commandsLoggedIn, command) && !checkIfLoggedIn()) {
     throw AuthVerifierError("This command can be used only when logged in");
   }
@@ -36,11 +36,11 @@ void AuthVerifier::verifyCommand(std::string command, paramDeque params) {
   }
 
   if (command == "shutdown") {
-    verifyShutdown(params.at(0));
+    authShutdown(params.at(0));
   }
 }
 
-void AuthVerifier::verifyShutdown(std::string IP) {
+void AuthVerifier::authShutdown(std::string IP) {
   try {
     SQLiteQuery selectMachine = SQLiteQuery(SELECT_MACHINE, &dbConnector);
     selectMachine.bindText(1, IP);

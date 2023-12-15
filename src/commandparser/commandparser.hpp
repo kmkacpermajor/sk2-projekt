@@ -14,5 +14,4 @@ class CommandParser {
  public:
   CommandParser();
   std::deque<std::string> parseCommand(std::string command);
-  ~CommandParser();
 };

@@ -22,5 +22,3 @@ std::deque<std::string> CommandParser::parseCommand(std::string command) {
 
   return deque;
 }
-
-CommandParser::~CommandParser() {}

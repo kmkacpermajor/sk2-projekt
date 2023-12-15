@@ -18,12 +18,13 @@ class SQLiteQuery {
   sqlite3_stmt *statement;
   sqlite3 *db;
 
+  void checkForError(int sqliteStatus);
+
  public:
   SQLiteQuery(std::string sql, SQLiteConnector *dbConnector);
   SQLiteQuery(std::string sql, sqlite3 *db);
   int runOperation();
   int getLastId();
-  void checkForError(int sqliteStatus);
   SQLiteQuery &bindText(int index, std::string value);
   SQLiteQuery &bindInt(int index, int value);
   std::vector<std::map<std::string, std::string>> runQuery();
