@@ -14,7 +14,7 @@ AuthVerifierError::AuthVerifierError(const std::string message) {
   this->message = message;
 }
 
-std::string AuthVerifierError::what() { return this->message; }
+char const *AuthVerifierError::what() { return message.c_str(); }
 
 AuthVerifier::AuthVerifier(TCPConnection &conn, SQLiteConnector &dbC)
     : connection(conn), dbConnector(dbC) {}
@@ -60,6 +60,6 @@ void AuthVerifier::authShutdown(std::string IP) {
     }
 
   } catch (SQLiteQueryError &e) {
-    throw AuthVerifierError("Error: " + e.what());
+    throw AuthVerifierError("Error: " + std::string(e.what()));
   }
 }

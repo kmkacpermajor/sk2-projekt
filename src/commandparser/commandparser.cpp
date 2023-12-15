@@ -8,7 +8,7 @@ CommandParserError::CommandParserError(const std::string message) {
   this->message = message;
 }
 
-std::string CommandParserError::what() { return message; }
+char const* CommandParserError::what() { return message.c_str(); }
 
 CommandParser::CommandParser() {}
 

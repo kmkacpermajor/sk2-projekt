@@ -8,7 +8,7 @@ class ListenError : public std::exception {
 
  public:
   ListenError(int port);
-  std::string what();
+  char const* what();
 };
 
 struct sockaddr_in prepareSockAddrIn(int family, int ip, int port);

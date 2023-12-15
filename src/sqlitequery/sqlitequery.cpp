@@ -15,7 +15,7 @@ SQLiteQueryError::SQLiteQueryError(const std::string message, int errNo) {
   this->errNo = errNo;
 }
 
-std::string SQLiteQueryError::what() { return message; }
+char const *SQLiteQueryError::what() { return message.c_str(); }
 
 int SQLiteQueryError::what_errno() { return errNo; }
 
@@ -40,7 +40,7 @@ void SQLiteQuery::checkForError(int sqliteStatus) {
   }
 }
 
-int SQLiteQuery::getLastId() {
+int SQLiteQuery::getLastID() {
   return std::stoi(
       SQLiteQuery(SELECT_LAST_ID, db).runQuery().at(0).at("rowid"));
 }
@@ -50,7 +50,7 @@ int SQLiteQuery::runOperation() {
   std::cout << "Running SQL: " << out << std::endl;
   int sqliteStatus = sqlite3_step(this->statement);
   checkForError(sqliteStatus);
-  return getLastId();  // returns last id (id updates after insert, not update)
+  return getLastID();  // returns last id (id updates after insert, not update)
 }
 
 SQLiteQuery &SQLiteQuery::bindText(int index, std::string text) {

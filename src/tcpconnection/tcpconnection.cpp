@@ -16,7 +16,7 @@ ConnectionEndedException::ConnectionEndedException() {}
 
 ConnectionError::ConnectionError(int err) { this->err = err; }
 
-std::string ConnectionError::what() { return strerror(this->err); }
+char const* ConnectionError::what() { return strerror(this->err); }
 
 TCPConnection::TCPConnection(int serverFD, std::mutex& m) : mutex(m) {
   setServerFD(serverFD);
@@ -91,5 +91,9 @@ void TCPConnection::sendMessage(std::string message) {
     throw ConnectionEndedException();
   }
 }
+
+int TCPConnection::getMachineID() { return machineID; }
+
+void TCPConnection::setMachineID(int machineID) { this->machineID = machineID; }
 
 TCPConnection::~TCPConnection() { close(clientFD); }

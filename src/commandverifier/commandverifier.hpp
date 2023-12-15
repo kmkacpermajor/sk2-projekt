@@ -13,7 +13,7 @@ class CommandVerifierError : public std::exception {
 
  public:
   CommandVerifierError(const std::string message);
-  std::string what();
+  char const *what();
 };
 
 class CommandVerifierBadArgumentsError : public CommandVerifierError {

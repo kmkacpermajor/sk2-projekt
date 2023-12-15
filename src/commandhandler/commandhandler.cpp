@@ -18,7 +18,7 @@ CommandHandlerError::CommandHandlerError(const std::string message) {
   this->message = message;
 }
 
-std::string CommandHandlerError::what() { return this->message; }
+char const* CommandHandlerError::what() { return message.c_str(); }
 
 CommandHandler::CommandHandler(TCPConnection& conn, SQLiteConnector& dbC)
     : dbConnector(dbC), connection(conn) {
@@ -75,7 +75,7 @@ std::string CommandHandler::registerCommand(paramDeque params) {
     if (e.what_errno() == SQLITE_CONSTRAINT_UNIQUE) {
       return "User " + username + " already exists";
     }
-    throw CommandHandlerError("Error: " + e.what());
+    throw CommandHandlerError("Error: " + std::string(e.what()));
   }
 
   return "Registered new user: " + username;
@@ -95,7 +95,8 @@ std::string CommandHandler::clientlistCommand(paramDeque params) {
 std::string CommandHandler::loginCommand(paramDeque params) {
   std::string username = params[0];
 
-  int userId;
+  int userID;
+  int machineID;
 
   try {
     auto user =
@@ -105,27 +106,28 @@ std::string CommandHandler::loginCommand(paramDeque params) {
                                 " doesn't exist");
     }
 
-    userId = std::stoi(user.at(0).at("rowid"));
+    userID = std::stoi(user.at(0).at("user_id"));
 
     SQLiteQuery("BEGIN", &dbConnector).runOperation();
-    SQLiteQuery(INSERT_MACHINE, &dbConnector)
-        .bindText(1, connection.getIPAddress())
-        .bindInt(2, connection.getClientFD())
-        .bindInt(3, userId)
-        .runOperation();
+    machineID = SQLiteQuery(INSERT_MACHINE, &dbConnector)
+                    .bindText(1, connection.getIPAddress())
+                    .bindInt(2, connection.getClientFD())
+                    .bindInt(3, userID)
+                    .runOperation();
 
     SQLiteQuery(INSERT_ALLOWED_SHUTDOWN, &dbConnector)
-        .bindText(1, username)
-        .bindText(2, connection.getIPAddress())
+        .bindInt(1, connection.getCurrentUserID())
+        .bindInt(2, machineID)
         .runOperation();
     SQLiteQuery("COMMIT", &dbConnector).runOperation();
 
   } catch (SQLiteQueryError& e) {
     SQLiteQuery("ROLLBACK", &dbConnector).runOperation();
-    throw CommandHandlerError("Error: " + e.what());
+    throw CommandHandlerError("Error: " + std::string(e.what()));
   }
 
-  connection.setCurrentUser(username, userId);
+  connection.setCurrentUser(username, userID);
+  connection.setMachineID(machineID);
 
   return "Logged in as " + username;
 }
@@ -144,7 +146,7 @@ std::string CommandHandler::logoffCommand(paramDeque params) {
     SQLiteQuery("COMMIT", &dbConnector).runOperation();
   } catch (SQLiteQueryError& e) {
     SQLiteQuery("ROLLBACK", &dbConnector).runOperation();
-    throw CommandHandlerError("Error: " + e.what());
+    throw CommandHandlerError("Error: " + std::string(e.what()));
   }
 
   connection.logout();
@@ -188,25 +190,25 @@ std::string CommandHandler::grantCommand(paramDeque params) {
   std::string username = params[0];
 
   try {
-    auto userAndMachineId =
+    auto userAndMachineID =
         SQLiteQuery(SELECT_USER_AND_MACHINE_ID, &dbConnector)
             .bindText(1, username)
             .bindText(2, connection.getIPAddress())
             .runQuery();
 
-    if (userAndMachineId.empty()) {
+    if (userAndMachineID.empty()) {
       throw CommandHandlerError("User " + username + " doesn't exist");
     }
 
     SQLiteQuery(INSERT_ALLOWED_SHUTDOWN, &dbConnector)
-        .bindInt(1, std::stoi(userAndMachineId.at(0).at("user_id")))
-        .bindInt(2, std::stoi(userAndMachineId.at(0).at("machine_id")))
+        .bindInt(1, std::stoi(userAndMachineID.at(0).at("user_id")))
+        .bindInt(2, std::stoi(userAndMachineID.at(0).at("machine_id")))
         .runOperation();
   } catch (SQLiteQueryError& e) {
     if (e.what_errno() == SQLITE_CONSTRAINT_UNIQUE) {
       return "User already has access to current machine";
     }
-    throw CommandHandlerError("Error: " + e.what());
+    throw CommandHandlerError("Error: " + std::string(e.what()));
   }
 
   return "Granted " + username + " permission for current machine";
@@ -221,7 +223,7 @@ std::string CommandHandler::revokeCommand(paramDeque params) {
         .bindText(2, connection.getIPAddress())
         .runOperation();
   } catch (SQLiteQueryError& e) {
-    throw CommandHandlerError("Error: " + e.what());
+    throw CommandHandlerError("Error: " + std::string(e.what()));
   }
 
   return "Revoked permission for current machine form " + username;
@@ -239,7 +241,7 @@ std::string CommandHandler::shutdownCommand(paramDeque params) {
 
     targetFD = std::stoi(machine.at(0).at("file_descriptor"));
   } catch (SQLiteQueryError& e) {
-    throw CommandHandlerError("Error: " + e.what());
+    throw CommandHandlerError("Error: " + std::string(e.what()));
   }
 
   try {
@@ -247,7 +249,7 @@ std::string CommandHandler::shutdownCommand(paramDeque params) {
     targetConnection.setClientFD(targetFD);
     targetConnection.sendMessage("close");
   } catch (ConnectionError& e) {
-    throw CommandHandlerError("Error: " + e.what());
+    throw CommandHandlerError("Error: " + std::string(e.what()));
   }
 
   return "Machine " + IP + " successfully shutdown";

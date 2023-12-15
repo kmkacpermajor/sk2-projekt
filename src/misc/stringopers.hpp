@@ -30,7 +30,7 @@ template <typename... Args>
 inline std::string string_format(const std::string &format, Args... args) {
   int size_s = std::snprintf(nullptr, 0, format.c_str(), args...) + 1;
   if (size_s <= 0) {
-    throw std::runtime_error("Error during formatting.");
+    throw std::exception("Error during formatting.");
   }
   auto size = static_cast<size_t>(size_s);
   std::unique_ptr<char[]> buf(new char[size]);

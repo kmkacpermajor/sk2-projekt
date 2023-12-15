@@ -24,7 +24,7 @@ CommandVerifierBadArgumentsError::CommandVerifierBadArgumentsError(
     : CommandVerifierError("Incorrect number of parameters for command " +
                            command + ". Expected: " + expected) {}
 
-std::string CommandVerifierError::what() { return this->message; }
+char const* CommandVerifierError::what() { return message.c_str(); }
 
 CommandVerifier::CommandVerifier(SQLiteConnector& dbC) : dbConnector(dbC) {}
 

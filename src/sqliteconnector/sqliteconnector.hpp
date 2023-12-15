@@ -11,7 +11,7 @@ class DatabaseError : public std::exception {
 
  public:
   DatabaseError(const std::string message);
-  std::string what();
+  char const *what();
 };
 
 class SQLiteConnector {

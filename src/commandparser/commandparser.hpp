@@ -7,7 +7,7 @@ class CommandParserError : public std::exception {
 
  public:
   CommandParserError(const std::string message);
-  std::string what();
+  char const* what();
 };
 
 class CommandParser {

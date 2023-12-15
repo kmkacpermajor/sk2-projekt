@@ -8,7 +8,7 @@ ListenError::ListenError(int port) {
   this->message = "Cannot listen on port: " + std::to_string(port);
 }
 
-std::string ListenError::what() { return this->message; }
+char const* ListenError::what() { return message.c_str(); }
 
 struct sockaddr_in prepareSockAddrIn(int family, int ip, int port) {
   struct sockaddr_in serverAddress;

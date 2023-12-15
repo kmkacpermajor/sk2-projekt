@@ -12,7 +12,7 @@ class ConnectionError : public std::exception {
 
  public:
   ConnectionError(const int err);
-  std::string what();
+  char const* what();
 };
 
 class TCPConnection {
@@ -20,6 +20,7 @@ class TCPConnection {
   std::string IPAddress;
   std::string currentUser = "";
   int currentUserID = -1;
+  int machineID = -1;
   std::mutex& mutex;
 
  public:
@@ -29,12 +30,14 @@ class TCPConnection {
   std::string getMessage();
   std::string getCurrentUser();
   std::mutex& getMutex();
+  int getMachineID();
   int getCurrentUserID();
+  int getClientFD();
   void setServerFD(int fd);
   void setClientFD(int fd);
+  void setMachineID(int machineID);
   void setCurrentUser(std::string username, int id);
   void sendMessage(std::string message);
   void logout();
-  int getClientFD();
   ~TCPConnection();
 };

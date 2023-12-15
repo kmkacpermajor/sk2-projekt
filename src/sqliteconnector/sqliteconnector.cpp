@@ -14,7 +14,7 @@ DatabaseError::DatabaseError(const std::string message) {
   this->message = message;
 }
 
-std::string DatabaseError::what() { return this->message; }
+char const *DatabaseError::what() { return message.c_str(); }
 
 SQLiteConnector::SQLiteConnector(std::string dbName) {
   this->dbName = dbName;

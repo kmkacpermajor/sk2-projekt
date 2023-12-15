@@ -77,21 +77,8 @@ std::string AgentConnection::prepareResponse(std::string message) {
 
       return commandHandler.handleCommand(command, params);
     }
-  } catch (CommandHandlerError &e) {
+  } catch (const std::exception &e) {
     std::cout << "Error occurred when handling command: " << message << ": "
-              << e.what() << std::endl;
-    return e.what();
-  } catch (CommandParserError &e) {
-    std::cout << "Error occurred when parsing command: " << message << ": "
-              << e.what() << std::endl;
-    return e.what();
-
-  } catch (AuthVerifierError &e) {
-    std::cout << "Error occurred when authorizing command: " << message << ": "
-              << e.what() << std::endl;
-    return e.what();
-  } catch (CommandVerifierError &e) {
-    std::cout << "Error occurred when verifing command: " << message << ": "
               << e.what() << std::endl;
     return e.what();
   }

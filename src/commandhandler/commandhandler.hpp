@@ -13,7 +13,7 @@ class CommandHandlerError : public std::exception {
 
  public:
   CommandHandlerError(const std::string message);
-  std::string what();
+  char const *what();
 };
 
 class CommandHandler {
@@ -36,7 +36,7 @@ class CommandHandler {
                                  std::string expected);
   void addCommandFunction(std::string command,
                           const commandStringFunction &func);
-  
+
  public:
   CommandHandler(TCPConnection &conn, SQLiteConnector &dbC);
   std::string handleCommand(std::string command, paramDeque params);
