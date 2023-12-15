@@ -42,18 +42,17 @@ void AuthVerifier::authCommand(std::string command, paramDeque params) {
 
 void AuthVerifier::authShutdown(std::string IP) {
   try {
-    SQLiteQuery selectMachine = SQLiteQuery(SELECT_MACHINE, &dbConnector);
-    selectMachine.bindText(1, IP);
-    auto machineResult = selectMachine.runQuery();
+    auto machineResult =
+        SQLiteQuery(SELECT_MACHINE, &dbConnector).bindText(1, IP).runQuery();
     if (machineResult.empty()) {
       throw AuthVerifierError("Machine with IP " + IP + " doesn't exist");
     }
 
-    SQLiteQuery selectAllowedShutdown =
-        SQLiteQuery(SELECT_ALLOWED_SHUTDOWN, &dbConnector);
-    selectAllowedShutdown.bindText(1, connection.getCurrentUser());
-    selectAllowedShutdown.bindText(2, IP);
-    auto allowedShutdownResult = selectAllowedShutdown.runQuery();
+    auto allowedShutdownResult =
+        SQLiteQuery(SELECT_ALLOWED_SHUTDOWN, &dbConnector)
+            .bindText(1, connection.getCurrentUser())
+            .bindText(2, IP)
+            .runQuery();
 
     if (allowedShutdownResult.empty()) {
       throw AuthVerifierError(

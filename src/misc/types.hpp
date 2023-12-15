@@ -1,11 +1,10 @@
 #pragma once
 #include <deque>
 #include <functional>
-#include <map>
 #include <string>
+#include <unordered_map>
 
 using paramDeque = std::deque<std::string>;
 using commandStringFunction = std::function<std::string(paramDeque)>;
-using commandVoidFunction = std::function<void(paramDeque)>;
-using commandStringFunctionMap = std::map<std::string, commandStringFunction>;
-using commandVoidFunctionMap = std::map<std::string, commandVoidFunction>;
+using commandStringFunctionMap =
+    std::unordered_map<std::string, commandStringFunction>;

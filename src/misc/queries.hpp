@@ -5,16 +5,19 @@
   "SELECT COUNT(*) count FROM sqlite_schema WHERE type ='table' AND name NOT " \
   "LIKE 'sqlite_%'"
 
-#define CREATE_USERS \
-  "CREATE TABLE IF NOT EXISTS users (rowid INTEGER PRIMARY KEY ASC, username TEXT UNIQUE NOT NULL)"
+#define CREATE_USERS                                                           \
+  "CREATE TABLE IF NOT EXISTS users (rowid INTEGER PRIMARY KEY ASC, username " \
+  "TEXT UNIQUE NOT NULL)"
 
-#define CREATE_MACHINES                                                        \
-  "CREATE TABLE IF NOT EXISTS machines (rowid INTEGER PRIMARY KEY ASC, ip_address TEXT NOT NULL, "     \
-  "user_id NOT NULL, file_descriptor NOT NULL, state INTEGER " \
+#define CREATE_MACHINES                                                  \
+  "CREATE TABLE IF NOT EXISTS machines (rowid INTEGER PRIMARY KEY ASC, " \
+  "ip_address TEXT NOT NULL, "                                           \
+  "user_id NOT NULL, file_descriptor NOT NULL, state INTEGER "           \
   "NOT NULL, UNIQUE(ip_address, user_id))"
 
 #define CREATE_ALLOWED_SHUTDOWNS                                             \
-  "CREATE TABLE IF NOT EXISTS allowed_shutdowns (rowid INTEGER PRIMARY KEY ASC, user_id INTEGER NOT NULL, " \
+  "CREATE TABLE IF NOT EXISTS allowed_shutdowns (rowid INTEGER PRIMARY KEY " \
+  "ASC, user_id INTEGER NOT NULL, "                                          \
   "machine_id INTEGER NOT NULL, FOREIGN KEY(user_id) REFERENCES "            \
   "users(rowid), FOREIGN KEY(machine_id) REFERENCES machines(rowid) ON "     \
   "DELETE CASCADE, UNIQUE(user_id, machine_id))"
@@ -26,6 +29,11 @@
 #define SELECT_MACHINE "SELECT * FROM machines WHERE ip_address = ?"
 
 #define SELECT_LAST_ID "SELECT last_insert_rowid() rowid"
+
+#define SELECT_USER_AND_MACHINE_ID                                             \
+  "SELECT u.rowid as user_id, "                                                \
+  "m.rowid as machine_id from users u cross join machines m where u.username " \
+  "= ? and m.ip_address = ?"
 
 #define SELECT_ALLOWED_SHUTDOWN                                             \
   "SELECT a.rowid FROM allowed_shutdowns a INNER JOIN machines m ON "       \
@@ -55,11 +63,8 @@
   "INSERT INTO machines (ip_address, file_descriptor, user_id, state) VALUES " \
   "(?, ?, ?, 1)"
 
-// binding in subqueries didn't work as expected
-#define INSERT_ALLOWED_SHUTDOWN                                          \
-  "INSERT INTO allowed_shutdowns (user_id, machine_id) SELECT u.rowid, " \
-  "m.rowid from users u cross join machines m where u.username = ? and " \
-  "m.ip_address = ?"
+#define INSERT_ALLOWED_SHUTDOWN \
+  "INSERT INTO allowed_shutdowns (user_id, machine_id) VALUES (?, ?)"
 
 #define SET_STATUS "UPDATE machines SET state = ? WHERE ip_address = ?"
 

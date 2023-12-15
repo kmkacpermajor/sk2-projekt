@@ -10,11 +10,14 @@ extern "C" {
 #include "../sqliteconnector/sqliteconnector.hpp"
 #include "sqlitequery.hpp"
 
-SQLiteQueryError::SQLiteQueryError(const std::string message) {
+SQLiteQueryError::SQLiteQueryError(const std::string message, int errNo) {
   this->message = message;
+  this->errNo = errNo;
 }
 
-std::string SQLiteQueryError::what() { return this->message; }
+std::string SQLiteQueryError::what() { return message; }
+
+int SQLiteQueryError::what_errno() { return errNo; }
 
 SQLiteQuery::SQLiteQuery(std::string sql, SQLiteConnector *dbConnector) {
   this->db = dbConnector->getDatabase();
@@ -33,7 +36,7 @@ SQLiteQuery::SQLiteQuery(std::string sql, sqlite3 *db) {
 void SQLiteQuery::checkForError(int sqliteStatus) {
   if (sqliteStatus != SQLITE_OK && sqliteStatus != SQLITE_DONE) {
     std::string stringErrorMessage(sqlite3_errmsg(this->db));
-    throw SQLiteQueryError(stringErrorMessage);
+    throw SQLiteQueryError(stringErrorMessage, sqliteStatus);
   }
 }
 

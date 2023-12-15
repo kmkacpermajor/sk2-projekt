@@ -11,8 +11,7 @@ std::mutex m;
 
 void initDatabase() {
   try {
-    SQLiteConnector initSQLiteConnector = SQLiteConnector(DB_NAME);
-    initSQLiteConnector.initDatabase();
+    SQLiteConnector(DB_NAME).initDatabase();
   } catch (DatabaseError &e) {
     std::cout << "Error occurred when initializing database: " << e.what()
               << std::endl;

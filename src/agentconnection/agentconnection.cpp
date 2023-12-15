@@ -98,8 +98,7 @@ std::string AgentConnection::prepareResponse(std::string message) {
 }
 
 AgentConnection::~AgentConnection() {
-  SQLiteQuery finalizeMachine =
-      SQLiteQuery(FINALIZE_MACHINE, &dbConnector);
+  SQLiteQuery finalizeMachine(FINALIZE_MACHINE, &dbConnector);
   finalizeMachine.bindText(1, connection.getIPAddress());
   finalizeMachine.runOperation();
 }

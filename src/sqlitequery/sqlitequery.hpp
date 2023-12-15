@@ -8,10 +8,12 @@ extern "C" {
 
 class SQLiteQueryError : public std::exception {
   std::string message;
+  int errNo;
 
  public:
-  SQLiteQueryError(const std::string message);
+  SQLiteQueryError(const std::string message, const int errNo);
   std::string what();
+  int what_errno();
 };
 
 class SQLiteQuery {
