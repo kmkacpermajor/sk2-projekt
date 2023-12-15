@@ -95,8 +95,8 @@ void CommandVerifier::validateUserName(std::string username){
     SQLiteQuery checkForUser = SQLiteQuery(SELECT_USER, &dbConnector);
     checkForUser.bindText(1, username);
     auto result = checkForUser.runQuery();
-    if (!result.empty()){
-      throw CommandVerifierError("User with username "+username+" already exists");
+    if (result.empty()){
+      throw CommandVerifierError("User with username "+username+" doesn't exist");
     }
   } catch (SQLiteQueryError& e) {
     throw CommandVerifierError("Error: " + e.what());

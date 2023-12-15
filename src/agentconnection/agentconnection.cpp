@@ -90,6 +90,10 @@ std::string AgentConnection::prepareResponse(std::string message) {
     std::cout << "Error occurred when authorizing command: " << message << ": "
               << e.what() << std::endl;
     return e.what();
+  } catch (CommandVerifierError &e) {
+    std::cout << "Error occurred when verifing command: " << message << ": "
+              << e.what() << std::endl;
+    return e.what();
   }
 }
 
