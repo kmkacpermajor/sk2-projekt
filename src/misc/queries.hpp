@@ -5,14 +5,15 @@
   "SELECT COUNT(*) count FROM sqlite_schema WHERE type ='table' AND name NOT " \
   "LIKE 'sqlite_%'"
 
-#define CREATE_USERS                                                           \
-  "CREATE TABLE IF NOT EXISTS users (rowid INTEGER PRIMARY KEY ASC, username " \
+#define CREATE_USERS                                                    \
+  "CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY ASC, " \
+  "username "                                                           \
   "TEXT UNIQUE NOT NULL)"
 
-#define CREATE_MACHINES                                                  \
-  "CREATE TABLE IF NOT EXISTS machines (rowid INTEGER PRIMARY KEY ASC, " \
-  "ip_address TEXT NOT NULL, "                                           \
-  "user_id NOT NULL, file_descriptor NOT NULL, state INTEGER "           \
+#define CREATE_MACHINES                                                       \
+  "CREATE TABLE IF NOT EXISTS machines (machine_id INTEGER PRIMARY KEY ASC, " \
+  "ip_address TEXT NOT NULL, "                                                \
+  "user_id NOT NULL, file_descriptor NOT NULL, state INTEGER "                \
   "NOT NULL, UNIQUE(ip_address, user_id))"
 
 #define CREATE_ALLOWED_SHUTDOWNS                                             \
