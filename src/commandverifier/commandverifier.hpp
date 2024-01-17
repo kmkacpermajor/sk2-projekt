@@ -31,8 +31,8 @@ class CommandVerifier {
       {"login", {1, "login [name]"}},
       {"logoff", {0, "login"}},
       {"list", {0, "list"}},
-      {"grant", {1, "grant [IP]"}},
-      {"revoke", {1, "revoke [IP]"}},
+      {"grant", {1, "grant [name]"}},
+      {"revoke", {1, "revoke [name]"}},
       {"shutdown", {1, "shutdown [IP]"}},
       {"exit", {0, "exit"}},
       {"help", {0, "help"}}};
