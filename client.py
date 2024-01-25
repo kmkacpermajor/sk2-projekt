@@ -6,6 +6,20 @@ import threading
 import sys
 from time import sleep
 
+def is_socket_closed(sock: socket.socket) -> bool:
+    try:
+        data = sock.recv(16, socket.MSG_DONTWAIT | socket.MSG_PEEK)
+        if len(data) == 0:
+            return True
+    except BlockingIOError:
+        return False
+    except ConnectionResetError:
+        return True
+    except Exception as e:
+        logger.exception("unexpected exception when checking if a socket is closed")
+        return False
+    return False
+
 def readInput(sock):
     while True:
         sys.stdout.flush()
@@ -39,6 +53,10 @@ with socket.socket() as sock:
     thread = threading.Thread(target=readInput, args=(sock,), daemon=True)
     thread.start()
     while True:
+        if is_socket_closed(sock):
+            print('Exiting...')
+            sys.exit(0)
+
         if not thread.is_alive():
             print('Exiting...')
             sys.exit(0)

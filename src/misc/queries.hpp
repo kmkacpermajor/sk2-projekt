@@ -32,23 +32,23 @@
 #define SELECT_LAST_ID "SELECT last_insert_rowid() rowid"
 
 #define SELECT_USER_AND_MACHINE_ID                                             \
-  "SELECT u.rowid as user_id, "                                                \
-  "m.rowid as machine_id from users u cross join machines m where u.username " \
+  "SELECT u.user_id, "                                                \
+  "m.machine_id from users u cross join machines m where u.username " \
   "= ? and m.ip_address = ?"
 
 #define SELECT_ALLOWED_SHUTDOWN                                             \
   "SELECT a.rowid FROM allowed_shutdowns a INNER JOIN machines m ON "       \
-  "a.machine_id = m.rowid INNER JOIN users u ON a.user_id = u.rowid WHERE " \
+  "a.machine_id = m.machine_id INNER JOIN users u ON a.user_id = u.user_id WHERE " \
   "u.username = ? AND m.ip_address = ?"
 
 // left joins didnt work as expected
 #define SELECT_ALLOWED_SHUTDOWNS                                             \
   "SELECT *, 0 permission FROM (SELECT m.ip_address, m.state FROM "          \
-  "allowed_shutdowns a INNER JOIN machines m ON a.machine_id = m.rowid "     \
+  "allowed_shutdowns a INNER JOIN machines m ON a.machine_id = m.machine_id "     \
   "EXCEPT SELECT m.ip_address, m.state FROM allowed_shutdowns a INNER JOIN " \
-  "machines m ON a.machine_id = m.rowid WHERE a.user_id = ?1) UNION SELECT " \
+  "machines m ON a.machine_id = m.machine_id WHERE a.user_id = ?1) UNION SELECT " \
   "m.ip_address, m.state, 1 FROM allowed_shutdowns a INNER JOIN machines m " \
-  "ON a.machine_id = m.rowid WHERE a.user_id = ?1"
+  "ON a.machine_id = m.machine_id WHERE a.user_id = ?1"
 
 #define SELECT_MACHINE_OWNER                                             \
   "SELECT u.rowid id, u.username FROM users u INNER JOIN machines m ON " \

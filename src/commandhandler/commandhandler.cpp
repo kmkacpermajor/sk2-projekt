@@ -158,7 +158,9 @@ std::string CommandHandler::listCommand(paramDeque params) {
   std::string resultString = "List of available machines:\n";
 
   auto allowedShutdowns =
-      SQLiteQuery(SELECT_ALLOWED_SHUTDOWNS, &dbConnector).runQuery();
+      SQLiteQuery(SELECT_ALLOWED_SHUTDOWNS, &dbConnector)
+      .bindInt(1, connection.getCurrentUserID())
+      .runQuery();
   for (auto allowedShutdown : allowedShutdowns) {
     std::ostringstream formatted;
     std::string IP = allowedShutdown.at("ip_address");
