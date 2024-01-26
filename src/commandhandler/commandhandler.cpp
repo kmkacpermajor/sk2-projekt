@@ -157,10 +157,9 @@ std::string CommandHandler::logoffCommand(paramDeque params) {
 std::string CommandHandler::listCommand(paramDeque params) {
   std::string resultString = "List of available machines:\n";
 
-  auto allowedShutdowns =
-      SQLiteQuery(SELECT_ALLOWED_SHUTDOWNS, &dbConnector)
-      .bindInt(1, connection.getCurrentUserID())
-      .runQuery();
+  auto allowedShutdowns = SQLiteQuery(SELECT_ALLOWED_SHUTDOWNS, &dbConnector)
+                              .bindInt(1, connection.getCurrentUserID())
+                              .runQuery();
   for (auto allowedShutdown : allowedShutdowns) {
     std::ostringstream formatted;
     std::string IP = allowedShutdown.at("ip_address");
@@ -270,9 +269,9 @@ std::string CommandHandler::helpCommand(paramDeque params) {
       "- list - list of available machines and permissions to them for current "
       "client\n"
       "- grant [name] [IP] - grant client [name] permission to shutdown "
-      "machine [IP]\n"
+      "machine\n"
       "- revoke [name] [IP] - revoke client's [name] permission to shutdown "
-      "machine [IP]\n"
+      "machine\n"
       "- shutdown [IP] - shutdown machine [IP]\n"
       "- exit - exit from application";
 

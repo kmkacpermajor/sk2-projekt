@@ -5,6 +5,8 @@ Kacper Majorkowski 151753
 
 1. Opis projektu
 
+Kompilacja: `make`
+
 Serwer: C++ z wykorzystaniem biblioteki sqlite3 (dołączona do projektu)
 
 Klient: Python 3.10
