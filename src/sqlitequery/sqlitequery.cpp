@@ -36,7 +36,8 @@ SQLiteQuery::SQLiteQuery(std::string sql, sqlite3 *db) {
 void SQLiteQuery::checkForError(int sqliteStatus) {
   if (sqliteStatus != SQLITE_OK && sqliteStatus != SQLITE_DONE) {
     std::string stringErrorMessage(sqlite3_errmsg(this->db));
-    throw SQLiteQueryError(stringErrorMessage, sqliteStatus);
+    throw SQLiteQueryError(stringErrorMessage,
+                           sqlite3_extended_errcode(this->db));
   }
 }
 
